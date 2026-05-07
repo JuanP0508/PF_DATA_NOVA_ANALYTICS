@@ -1,133 +1,159 @@
-# 📊 Sistema de Recomendación para E-commerce de Electrónica 
+# 🔄 Pipeline de Limpieza, Transformación y Feature Engineering
 
-## 🧠 Descripción del Proyecto
+## 🧹 Inferencia de Categorías (Data Cleaning)
 
-Este proyecto desarrolla un sistema de recomendación para un e-commerce de productos electrónicos (celulares, accesorios, computadores, entre otros).
+En esta etapa del pipeline se aborda el problema de productos sin category_code, lo cual afecta directamente la calidad del sistema de recomendación.
 
-El problema identificado es la baja personalización en la recomendación de productos, lo que impacta negativamente la tasa de conversión y el valor promedio de compra (ticket promedio).
+🎯 Objetivo
 
-Como solución, se implementa un sistema que sugiere productos relevantes a los usuarios, incluyendo estrategias para abordar el problema de cold start en nuevos clientes.
+Asignar una categoría inferida a los productos que no cuentan con category_code, utilizando información disponible como el category_id y las marcas dominantes dentro de cada grupo.
 
+### ⚙️ Proceso Paso a Paso
 
-## 🎯 Objetivo
+**1.** Carga y limpieza inicial
+Interpretación:
 
-Desarrollar un sistema de recomendación que:
+Se cargan los datos desde el archivo events.csv.
+Se eliminan registros donde user_session es nulo.
 
-Sugiera productos relevantes a los usuarios
-Mejore la experiencia de compra
-Aumente la tasa de conversión
-Incremente el valor promedio de compra
+**2.** Problema: categorías faltantes
 
-## ⚙️ Tecnologías y Herramientas
-Lenguaje: Python
-Análisis de datos: pandas, numpy
-Modelado: reglas de asociación (Apriori)
-Evaluación:
-Precision@K
-Recall@K
-Support
-Confidence
-Lift
-Visualización / App: Streamlit
+Muchos productos no tienen category_code, lo que genera:
 
+Pérdida de información semántica
+Dificultad para agrupar productos
+Peor desempeño del recomendador
 
-## 🏗️ Estructura del Proyecto
+**3.** Estrategia de solución: inferencia por category_id
 
-```bash
-pf_data_nova_analytics/
-│
-├── data/
-│   ├── raw/            # Datos originales
-│   ├── processed/      # Datos limpios y transformados
-│   └── final/          # Dataset final para modelado
-│
-├── notebooks/          # Análisis exploratorio (EDA)
-│
-├── src/
-│   ├── carga.py               # Carga de datos
-│   ├── preprocessing.py       # Limpieza y transformación
-│   ├── recomendador.py        # Lógica del sistema de recomendación
-│   ├── reglas_asociacion.py   # Implementación de Apriori
-│   ├── evaluacion.py          # Métricas del modelo
-│   └── utils.py               # Funciones auxiliares
-│
-├── models/             # Modelos entrenados
-│
-├── app/
-│   └── streamlit_app.py       # Aplicación interactiva
-│
-├── reports/            # Reportes y resultados
-│
-├── requirements.txt    # Dependencias
-├── README.md           # Documentación
-├── main.py             # Ejecución principal del pipeline
-└── .gitignore
-```
+Se construye un diccionario que asigna una categoría inferida a cada category_id.
 
-## 🔄 Metodología
+**4.** Aplicación del Mapa de Inferencia
 
-El proyecto fue desarrollado bajo un enfoque Agile (Scrum), simulando un entorno real de trabajo colaborativo.
+Una vez construido el diccionario de inferencia, se aplicó sobre los registros con valores nulos en category_code con el objetivo de recuperar información faltante sin alterar los datos ya existentes.
 
-Se trabajó de manera iterativa, incluyendo:
+Para ello, se evaluó inicialmente la cantidad de valores nulos y posteriormente se realizó una asignación condicional: si un registro no tenía categoría, se intentaba inferir a partir de su category_id utilizando el mapa previamente definido; en caso contrario, se mantenía el valor original.
 
-Definición del problema
-Análisis exploratorio de datos (EDA)
-Preprocesamiento
-Modelado
-Evaluación
-Despliegue en aplicación interactiva
+Este proceso permitió cuantificar el impacto de la limpieza mediante tres métricas clave:
 
-## 🤖 Modelo de Recomendación
+- Número de valores nulos antes del proceso
+- Cantidad y porcentaje de registros recuperados
+- Valores que permanecen sin inferir
 
-El sistema se basa en reglas de asociación (Apriori) para identificar patrones de compra entre productos.
+La aplicación de esta estrategia mejora la calidad del dataset, incrementa la cobertura de categorías y fortalece la capacidad del sistema de recomendación para generar resultados más precisos y coherentes.
 
-Esto permite:
+Adicionalmente, se garantiza que la transformación sea no intrusiva, ya que solo se modifican los registros incompletos, preservando la integridad de los datos originales.
 
-Recomendar productos frecuentemente comprados juntos
-Generar recomendaciones personalizadas
-Implementar estrategias para usuarios nuevos (cold start)
+### 🏷️ Manejo de Categorías No Inferidas
 
-## 📏 Evaluación del Modelo
+A pesar del proceso de inferencia basado en category_id, algunos registros no pudieron ser clasificados debido a la falta de patrones claros o información suficiente.
 
-El rendimiento del sistema se mide mediante:
+Para garantizar la consistencia del dataset y evitar la pérdida de información, se asignó una categoría genérica a estos casos, permitiendo:
 
-Precision@K: proporción de recomendaciones relevantes dentro del top K
-Recall@K: proporción de productos relevantes recuperados
-Support: frecuencia de aparición de un conjunto de productos
-Confidence: probabilidad de compra conjunta
-Lift: grado de asociación entre productos
+- Mantener todos los registros dentro del sistema
+- Evitar valores nulos que puedan afectar el modelo
+- Agrupar productos ambiguos bajo una categoría controlada
 
-## 🚀 Ejecución del Proyecto
-Clonar el repositorio:
-git clone <url-del-repositorio>
-cd pf_data_nova_analytics
-Instalar dependencias:
-pip install -r requirements.txt
-Ejecutar el pipeline:
-python main.py
-Ejecutar la aplicación:
-streamlit run app/streamlit_app.py
+### 🧠 Identificación de Registros Inferidos
 
-## 📌 Resultados Esperados
-Mejora en la personalización de recomendaciones
-Incremento en la conversión de usuarios
-Aumento del ticket promedio
-Sistema escalable para entornos reales
+Se creó una nueva variable category_inferred para identificar qué registros fueron afectados por el proceso de inferencia, permitiendo
 
-## 👥 Equipo de Trabajo
+- Trazabilidad del proceso de limpieza
+- Análisis posterior del impacto de la inferencia
+- Evaluar el comportamiento del modelo sobre datos 
+- inferidos vs originales
 
+### 🏷️ Inferencia de Marca (brand)
 
+En esta etapa se aborda el problema de productos que no cuentan con información de marca (brand), lo cual puede afectar la calidad del sistema de recomendación y el análisis de comportamiento de compra.
 
-## Dataset
+🎯 Objetivo
 
-El dataset original no se incluye en el repositorio debido a las restricciones de tamaño de GitHub.
+Asignar una marca inferida a los productos sin brand, utilizando como referencia su category_code, con el fin de mantener la consistencia del dataset y evitar valores nulos.
 
-Dataset obtenido desde kaggle-Puede descargarse desde el siguiente enlace:
+🧠 Estrategia de Inferencia
 
-- [Descargar dataset](https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-electronics-store)
+Para los registros sin marca, se define una regla basada en la estructura de la categoría:
 
-Una vez descargado, colocar el archivo:
+Se asigna una marca genérica compuesta por el prefijo "generic." seguido del último nivel de la categoría.
 
-'events.csv'
+## 🧩 Análisis y Estructuración de Categorías
 
-en la carpeta---> data/raw/
+Después del proceso de limpieza e inferencia de `category_code`, se realizó un análisis de su estructura jerárquica para comprender cómo están organizadas las categorías y preparar el dataset para su posterior transformación.
+
+Las categorías siguen un formato jerárquico delimitado por puntos (`.`), donde cada nivel representa un mayor grado de especificidad (por ejemplo: `electronics.telephone.accessory`).
+
+### ⚙️ Análisis de la estructura
+
+Para identificar la profundidad de las categorías, se contabilizó el número de puntos (`.`) presentes en cada valor de `category_code`, lo cual permite determinar el número de niveles jerárquicos.
+
+Adicionalmente, se exploraron ejemplos representativos por cada nivel para validar la consistencia de la estructura.
+
+### 📊 Resultados
+
+La distribución de los niveles jerárquicos fue la siguiente:
+
+* **Nivel 0 (0 puntos):** 0 registros
+* **Nivel 1 (1 punto):** 250,245 registros
+* **Nivel 2 (2 puntos):** 634,304 registros
+* **Nivel 3 (3 puntos):** 415 registros
+
+Ejemplos identificados:
+
+* **Nivel 1:**
+  `electronics.telephone`, `computers.desktop`, `accessories.generic`
+
+* **Nivel 2:**
+  `computers.components.cooler`, `electronics.telephone.accessory`
+
+* **Nivel 3:**
+  `electronics.audio.music_tools.piano`
+
+### 🧠 Interpretación
+
+A partir de estos resultados se concluye que:
+
+* No existen categorías sin jerarquía, lo que indica una estructura consistente en el dataset.
+* La mayor concentración de datos se encuentra en el **nivel 2**, lo que lo convierte en el nivel más adecuado para el análisis y modelado.
+* El **nivel 1** agrupa categorías más generales, útiles para segmentaciones amplias.
+* El **nivel 3**, aunque más específico, tiene muy baja representación, lo que puede generar problemas de dispersión (sparsity) en el modelo.
+
+### ⚠️ Implicaciones para el modelado
+
+La variabilidad en la profundidad de las categorías hace necesario estandarizar su estructura. Utilizar niveles demasiado específicos podría afectar negativamente el rendimiento del sistema de recomendación, mientras que niveles muy generales pueden perder capacidad descriptiva.
+
+### 🚀 Decisión de transformación
+
+Con base en este análisis, se definió la siguiente estrategia:
+
+* Dividir `category_code` en múltiples niveles jerárquicos (`nivel1`, `nivel2`, `nivel3`)
+* Priorizar el uso del **nivel 2** para el modelado, debido a su equilibrio entre granularidad y representatividad
+* Mantener niveles más profundos como información complementaria
+* para el nivel más detallado se conserva dentro de la variable **nivel 3** y que No se pierde información relevante al estandarizar la jerarquía
+
+Esta transformación permite mejorar la calidad del feature engineering, facilitar el análisis por categorías y fortalecer el desempeño del sistema de recomendación.
+
+### 🧠 Normalización Contextual de Categorías
+
+Durante el proceso de análisis se identificaron categorías con ambigüedad semántica, ya que aparecían en múltiples niveles jerárquicos (por ejemplo, términos como "accessories", "generic" o "storage").
+
+Este comportamiento genera inconsistencias, ya que una misma etiqueta puede tener diferentes significados dependiendo del contexto en el que se encuentre, afectando la calidad del sistema de recomendación.
+
+🎯 Objetivo
+
+Reducir la ambigüedad semántica mediante una normalización contextual, incorporando información de niveles superiores para generar categorías más específicas y coherentes.
+
+⚙️ Estrategia
+
+Se aplicó una transformación selectiva sobre categorías problemáticas:
+
+En nivel 2, se integra el contexto de nivel1
+En nivel 3, se utiliza el contexto de nivel2_norm previamente ajustado
+
+Esto permite diferenciar categorías que, aunque comparten nombre, pertenecen a contextos distintos.
+
+## 🧹Eliminación de Registros Duplicados
+
+Como parte del proceso inicial de limpieza, se realizó la identificación y eliminación de registros duplicados en el dataset, con el fin de garantizar la integridad y calidad de la información.
+
+La eliminación de duplicados se realizó únicamente sobre filas completamente iguales, evitando eliminar registros que, aunque similares, representen eventos distintos (por ejemplo, múltiples interacciones de un mismo usuario).
