@@ -114,5 +114,12 @@ Aumento del ticket promedio
 Sistema escalable para entornos reales
 
 ## 👥 Equipo de Trabajo
-
 Proyecto desarrollado como parte de una simulación académica en entorno ágil (Scrum).
+
+## Dataset
+El dataset original no se incluye en el repositorio debido a las restricciones de tamaño de GitHub.
+Dataset obtenido desde kaggle-Puede descargarse desde el siguiente enlace:
+- [Descargar dataset](https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-electronics-store)
+Una vez descargado, colocar el archivo:
+'events.csv'
+en la carpeta---> data/raw/
