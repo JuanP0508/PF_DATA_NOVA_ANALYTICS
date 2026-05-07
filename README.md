@@ -117,3 +117,17 @@ Sistema escalable para entornos reales
 ## 👥 Equipo de Trabajo
 
 
+
+## Dataset
+
+El dataset original no se incluye en el repositorio debido a las restricciones de tamaño de GitHub.
+
+Dataset obtenido desde kaggle-Puede descargarse desde el siguiente enlace:
+
+- [Descargar dataset](https://www.kaggle.com/datasets/mkechinov/ecommerce-events-history-in-electronics-store)
+
+Una vez descargado, colocar el archivo:
+
+'events.csv'
+
+en la carpeta---> data/raw/
