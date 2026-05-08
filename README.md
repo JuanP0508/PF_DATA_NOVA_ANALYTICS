@@ -137,11 +137,12 @@ Esta transformación permite mejorar la calidad del feature engineering, facilit
 
 Durante el proceso de análisis se identificaron categorías con ambigüedad semántica, ya que aparecían en múltiples niveles jerárquicos (por ejemplo, términos como "accessories", "generic" o "storage").
 
-Este comportamiento genera inconsistencias, ya que una misma etiqueta puede tener diferentes significados dependiendo del contexto en el que se encuentre, afectando la calidad del sistema de recomendación.
+Este comportamiento genera inconsistencias, ya que una misma etiqueta puede tener diferentes significados dependiendo del contexto en el que se encuentre, afectando la calidad del sistema de recomendación. 
+Adicionalmente, se encontraron pequeñas variaciones en la escritura de algunas categorías que funcionalmente significan lo mismo y todas ellas dentro de la misma categoría padre: bag y bags, router y routers, cooling y cooler, generator y generators. 
 
 🎯 Objetivo
 
-Reducir la ambigüedad semántica mediante una normalización contextual, incorporando información de niveles superiores para generar categorías más específicas y coherentes.
+Reducir la ambigüedad semántica mediante una normalización contextual, incorporando información de niveles superiores para generar categorías más específicas y coherentes, y unificar categorías con variaciones pequeñas de escritura.
 
 ⚙️ Estrategia
 
@@ -151,6 +152,10 @@ En nivel 2, se integra el contexto de nivel1
 En nivel 3, se utiliza el contexto de nivel2_norm previamente ajustado
 
 Esto permite diferenciar categorías que, aunque comparten nombre, pertenecen a contextos distintos.
+
+También se aplico una búsqueda y remplazo de las variantes tipográficas de categorías con un mismo significado, dejando las variantes en plural (e.g. bags, routers, generators. 
+
+Esto evita que los algoritmos de los modelos de recomendación no interpreten estas pequeñas variaciones como categorías totalmente distintas.
 
 ## 🧹Eliminación de Registros Duplicados
 
