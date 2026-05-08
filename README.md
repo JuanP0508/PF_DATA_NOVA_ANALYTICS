@@ -129,7 +129,7 @@ Con base en este análisis, se definió la siguiente estrategia:
 * Dividir `category_code` en múltiples niveles jerárquicos (`nivel1`, `nivel2`, `nivel3`)
 * Priorizar el uso del **nivel 2** para el modelado, debido a su equilibrio entre granularidad y representatividad
 * Mantener niveles más profundos como información complementaria
-* para el nivel más detallado se conserva dentro de la variable **nivel 3** y que No se pierde información relevante al estandarizar la jerarquía
+* Para el nivel más detallado se conserva dentro de la variable **nivel 3** y que no se pierde información relevante al estandarizar la jerarquía
 
 Esta transformación permite mejorar la calidad del feature engineering, facilitar el análisis por categorías y fortalecer el desempeño del sistema de recomendación.
 
