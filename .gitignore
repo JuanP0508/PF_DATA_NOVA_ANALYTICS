@@ -1,13 +1,5 @@
-# CSV datasets
-data/raw/*.csv
-data/final/*.csv
-
-# Mantener estructura
-!data/raw/.gitkeep
-!data/final/.gitkeep
-#archivos csv
-data/raw/*.csv
-data/final/*.csv
+#carpetas
+data/
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
