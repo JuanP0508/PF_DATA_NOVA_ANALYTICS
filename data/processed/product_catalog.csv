@@ -1,0 +1,11 @@
+product_id,product_name,category,brand,price,image
+3791351,AMD Ryzen Processor,CPU,AMD,204.29,amd_cpu.jpg
+809948,ASUS Prime Motherboard,Motherboard,ASUS,64.48,asus_board.jpg
+4099645,Gigabyte RTX Graphics,Video Card,Gigabyte,292.83,gpu.jpg
+1578612,Xiaomi Android Tablet,Tablet,Xiaomi,284.3,tablet.jpg
+3828501,BBK Smart Television,TV,BBK,87.16,tv.jpg
+4279,Logitech Web Camera,Camera,Logitech,26.46,cam.jpg
+3829912,Pantum Laser Printer,Printer,Pantum,122.86,printer.jpg
+4099764,Pioneer Auto Player,Auto Player,Pioneer,126.68,pioneer.jpg
+4027952,PocketBook E-Reader,Ebook,PocketBook,257.87,ebook.jpg
+1301733,ARK Smartphone,Smartphone,ARK,61.16,phone.jpg
