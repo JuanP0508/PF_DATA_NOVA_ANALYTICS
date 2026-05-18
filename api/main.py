@@ -9,7 +9,7 @@ app = FastAPI(
 )
 
 BASE_DIR = Path(__file__).resolve().parent.parent
-PRODUCTS_PATH = BASE_DIR / "data" / "product_catalog.csv"
+PRODUCTS_PATH = BASE_DIR / "data" / "processed" / "product_catalog.csv"
 app.include_router(router)
 
 @app.get("/")

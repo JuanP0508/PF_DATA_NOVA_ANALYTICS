@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import requests
 from datetime import datetime
 
 # CONFIGURACIÓN PÁGINA
@@ -29,7 +30,9 @@ st.set_page_config(
     layout="wide"
 )
 # CARGAR CSV
-df = pd.read_csv("data/processed/product_catalog.csv")
+# df = pd.read_csv("data/processed/product_catalog.csv")-en caso de usar el csv local
+response = requests.get("http://localhost:8000/products")
+df = pd.DataFrame(response.json())  
 
 # SESSION STATE PARA CARRITO
 if "cart" not in st.session_state:
