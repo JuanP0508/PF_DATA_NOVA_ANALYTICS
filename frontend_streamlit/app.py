@@ -42,16 +42,32 @@ if "events" not in st.session_state:
     st.session_state.events = []
 # FUNCIONES
 ## FUNCION EVENTOS
-def register_event(event_type, product_id):
-    st.session_state.events.append({
-        "event_time": datetime.now(),
+def register_event(event_type, row):
+
+    event = {
+        "event_time": str(datetime.now()),
         "event_type": event_type,
-        "product_id ": product_id,
-    })
+        "product_id": int(row["product_id"]),
+        "category_id": 0,
+        "category_code": row["category"],
+        "brand": row["brand"],
+        "price": float(row["price"]),
+        "user_id": 1,
+        "user_session": "session_001",
+        "category_inferred": False,
+        "brand_inferred": False
+    }
+
+    st.session_state.events.append(event)
+
+    requests.post(
+        "http://127.0.0.1:8000/records",
+        json=event
+    )
 ## FUNCION CARRITO
-def add_to_cart(product_id):
-    st.session_state.cart.append(product_id)
-    register_event("add_to_cart", product_id)
+def add_to_cart(row):
+    st.session_state.cart.append(row["product_id"])
+    register_event("add_to_cart", row)
 # SIDEBAR 
     ## CARRITO  
 st.sidebar.title("🛒 Carrito")
@@ -67,7 +83,7 @@ if st.sidebar.button("Finalizar compra"):
 
             register_event(
                 "purchase",
-                product_id
+                df[df["product_id"] == product_id].iloc[0]
             )
 
         st.sidebar.success(
@@ -118,7 +134,7 @@ for index, row in df.iterrows():
             "Agregar al carrito",
             key=f"add_{row['product_id']}",
             on_click=add_to_cart,
-            args=(row["product_id"],)
+            args=(row,)
         )
         ## BOTÓN VIEW DETAILS
         if st.button(
@@ -127,7 +143,7 @@ for index, row in df.iterrows():
         ):
             register_event(
             "view",
-            row["product_id"]
+            row
             )
 
         
