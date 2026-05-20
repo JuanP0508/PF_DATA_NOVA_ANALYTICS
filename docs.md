@@ -1728,3 +1728,226 @@ Finalmente, el sistema desarrollado demuestra que combinar:
 permite construir soluciones de recomendación más robustas, interpretables y adaptadas a problemas reales de e-commerce.
 
 El proyecto establece una base sólida para futuras mejoras orientadas a sistemas en tiempo real, modelos basados en Deep Learning y arquitecturas escalables de producción.
+
+---
+
+# 15. 🌐 API REST — Arquitectura y Endpoints
+
+## Descripción General
+
+La capa de acceso al sistema de recomendación está implementada como una API REST con **FastAPI**. Se comunica directamente con el módulo `src/recommender/svd_recommender.py`, que carga los modelos entrenados (ALS, GMM) en memoria al iniciar el servidor.
+
+## Stack Tecnológico
+
+| Componente | Tecnología |
+|------------|-----------|
+| Framework | FastAPI 0.136+ |
+| Servidor ASGI | Uvicorn |
+| Validación | Pydantic v2 |
+| Motor de recomendación | ALS (implicit 0.7.3) |
+
+## Estructura de Módulos
+
+```
+api/
+├── main.py                  # Punto de entrada, configuración de la app
+├── models/
+│   └── record.py            # Schema EventRecord (Pydantic)
+├── routes/
+│   └── recommendations.py   # Definición de todos los endpoints
+└── services/
+    └── recommender_service.py  # Lógica de negocio: recomendar, guardar eventos
+```
+
+## Endpoints
+
+### Sistema de recomendación
+
+#### `GET /recommend/{user_id}`
+
+Genera recomendaciones personalizadas para un usuario conocido.
+
+| Parámetro | Tipo | Default | Descripción |
+|-----------|------|---------|-------------|
+| `user_id` | int (path) | — | ID del usuario |
+| `n` | int (query) | 20 | Cantidad de recomendaciones |
+
+**Lógica interna:**
+- Tier 1 (usuarios activos): ALS top-100 → semantic reranking → 70% ALS + 30% cluster
+- Tier 2 (usuarios pasivos): ALS top-100 → semantic reranking → head(n)
+- Score final: `0.4 × score_norm + 0.6 × taxonomic_score`
+
+**Respuesta:**
+```json
+{
+  "user_id": 1515915625353226922,
+  "known_user": true,
+  "recommendations": [
+    {
+      "product_id": 1005135,
+      "score": 0.87,
+      "method": "ALS+semantic",
+      "brand": "samsung",
+      "price": 299.99,
+      "category": "electronics.smartphone"
+    }
+  ]
+}
+```
+
+#### `GET /onboarding/products`
+
+Devuelve un producto representativo por cluster para la pantalla de onboarding de nuevos usuarios. Filtra automáticamente productos de baja relevancia visual (cartuchos, tóner, papel) usando `_NIVEL3_SKIP`.
+
+#### `GET /onboarding/recommend/{cluster_id}`
+
+Recomendaciones para un usuario nuevo en base al cluster que eligió en el onboarding. Aplica diversificación con máximo 3 productos por `nivel3` para evitar sesgo de categoría.
+
+#### `GET /users/{user_id}/exists`
+
+Verifica si un usuario tiene historial en el sistema (distinción usuario conocido / usuario nuevo).
+
+### Productos
+
+#### `GET /products`
+
+Catálogo completo de productos desde `data/processed/product_catalog.csv`.
+
+#### `GET /products/lookup?ids=1,2,3`
+
+Información básica (brand, price, category) para una lista de IDs de productos. Sin parámetro devuelve todos.
+
+### Eventos
+
+#### `GET /records`
+#### `GET /records/{user_id}`
+
+Consulta eventos registrados. Permite ver el historial de interacciones acumulado en `data/final/events_final.csv`.
+
+#### `POST /records`
+
+Registra un nuevo evento de interacción. Es el mecanismo por el cual el frontend Streamlit guarda las acciones del usuario en producción.
+
+**Body (EventRecord):**
+```json
+{
+  "event_time": "2026-05-20T10:00:00Z",
+  "event_type": "view",
+  "product_id": 1005135,
+  "category_id": 2053013555631882655,
+  "category_code": "electronics.smartphone",
+  "brand": "samsung",
+  "price": 299.99,
+  "user_id": 1515915625353226922,
+  "user_session": "abc-123",
+  "category_inferred": false,
+  "brand_inferred": false
+}
+```
+
+## Ejecución
+
+```bash
+# Desde la raíz del proyecto con el entorno activado
+uvicorn api.main:app --reload
+```
+
+- API disponible en: `http://localhost:8000`
+- Documentación interactiva (Swagger UI): `http://localhost:8000/docs`
+
+---
+
+# 16. 🖥️ Frontend Streamlit — Tienda Interactiva y Monitor de Salud
+
+## Descripción General
+
+El frontend está construido con **Streamlit** como aplicación multipágina. Se comunica con la API REST mediante `httpx` para obtener recomendaciones y registrar eventos.
+
+## Estructura
+
+```
+frontend_streamlit/
+├── app.py                        # Página principal — Tienda Click & Tech
+└── pages/
+    └── 1_Monitor_de_Salud.py     # Página de monitoreo — Data Drift
+```
+
+## Página 1: Tienda Click & Tech (`app.py`)
+
+### Características
+
+- Carrito de compras persistente en `st.session_state`
+- Registro de eventos `view`, `cart`, `purchase` en tiempo real vía API
+- Onboarding para nuevos usuarios: muestra un producto por cluster y permite elegir preferencia
+- Diversificación de recomendaciones: máximo 3 productos por subcategoría (nivel3)
+
+### Cuello de botella: imágenes de productos
+
+El dataset no incluye URLs de imágenes individuales por producto, y descargar una imagen por cada uno de los ~17,000 productos del catálogo no era viable (tiempo de descarga, almacenamiento, límites de APIs de imágenes).
+
+**Solución adoptada:** sistema de imágenes por categoría con pool rotativo.
+
+- Se descargó manualmente un conjunto de imágenes representativas por categoría (`smartphone.jpg`, `cable.jpg`, `laptop.jpg`, etc.) almacenadas en `assets/images/`
+- Para categorías con muchos productos se agregaron variantes numeradas (`smartphone1.jpg`, `smartphone2.jpg`, …) que rotan cíclicamente
+- La función `_build_image_pools()` construye automáticamente el pool a partir del naming convention `{base}{número}.{ext}`
+- La función `pick_image()` selecciona la siguiente variante en el pool usando un contador, evitando que todos los productos de la misma categoría muestren la misma imagen
+
+```
+assets/images/
+├── smartphone.jpg       ← imagen base
+├── smartphone1.jpg      ← variante 1
+├── smartphone2.jpg      ← variante 2
+├── cable.jpg
+├── laptop.jpg
+└── ...
+```
+
+Esta decisión implica que los productos de la misma categoría comparten imágenes genéricas en lugar de fotos reales del producto, lo cual es una limitación visual pero permite que la demo funcione con todo el catálogo sin infraestructura adicional.
+
+## Página 2: Monitor de Salud (`pages/1_Monitor_de_Salud.py`)
+
+### Descripción
+
+Panel de monitoreo de **data drift** que compara la distribución de los datos de entrenamiento versus los datos de producción (eventos nuevos registrados por la aplicación).
+
+### Metodología
+
+Se utiliza el **Population Stability Index (PSI)** para medir el nivel de desvío entre distribuciones:
+
+| PSI | Semáforo | Interpretación |
+|-----|----------|----------------|
+| < 0.10 | 🟢 | Sin cambio significativo |
+| 0.10 – 0.25 | 🟡 | Cambio moderado — monitorear |
+| ≥ 0.25 | 🔴 | Cambio severo — reentrenar modelo |
+
+### Corte temporal
+
+- **Entrenamiento (referencia):** eventos anteriores a `2021-03-01` (~884,312 eventos)
+- **Producción:** eventos posteriores (interacciones registradas desde la app)
+
+### Tabs del dashboard
+
+1. **Categorías** — Comparación de distribución por `nivel1` y `nivel2_norm` entre entrenamiento y producción (gráfico de barras agrupadas con Plotly)
+2. **Tipo de interacción** — Distribución de `event_type` (view / cart / purchase)
+3. **Tabla de alertas** — PSI por categoría con colorización: verde / amarillo / rojo según umbral
+
+
+### Reentrenamiento
+
+Cuando el PSI supera 0.25 en categorías relevantes, se debe ejecutar el pipeline de reentrenamiento:
+
+```bash
+python run_pipeline.py
+```
+
+Esto ejecuta en orden: `PipelineV_3.0.ipynb` → `feature_engineering_final.ipynb` → `Clustering_Kmeans.ipynb` → `Notebook_Clustering_NMM.ipynb`
+
+## Ejecución
+
+```bash
+# Desde la raíz del proyecto con el entorno activado
+streamlit run frontend_streamlit/app.py
+```
+
+- Aplicación disponible en: `http://localhost:8501`
+- Navegación entre páginas desde el sidebar izquierdo

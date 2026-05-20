@@ -162,9 +162,12 @@ git clone https://github.com/JuanP0508/PF_DATA_NOVA_ANALYTICS.git
 cd PF_DATA_NOVA_ANALYTICS
 ```
 
-2️⃣ Instalar dependencias
+2️⃣ Crear entorno virtual e instalar dependencias
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate        # macOS/Linux
+# .venv\Scripts\activate         # Windows
 pip install -r requirements.txt
 ```
 
@@ -174,16 +177,80 @@ pip install -r requirements.txt
 uvicorn api.main:app --reload
 ```
 
-4️⃣ Ejecutar Streamlit
+La API quedará disponible en `http://localhost:8000`  
+Documentación interactiva: `http://localhost:8000/docs`
+
+4️⃣ Ejecutar aplicación Streamlit
 
 ```bash
 streamlit run frontend_streamlit/app.py
 ```
 
-5️⃣ Ejecutar pipeline principal
+La aplicación quedará disponible en `http://localhost:8501`  
+Incluye dos páginas accesibles desde el sidebar:
+- **app** — Tienda interactiva Click & Tech
+- **Monitor de Salud** — Panel de monitoreo de data drift
+
+5️⃣ Ejecutar pipeline principal (reentrenamiento)
 
 ```bash
 python run_pipeline.py
+```
+
+---
+
+## 🌐 API REST — Endpoints
+
+La API expone los siguientes endpoints bajo `http://localhost:8000`:
+
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/` | Health check de la API |
+| GET | `/products` | Catálogo completo de productos |
+| GET | `/products/lookup?ids=1,2,3` | Info de productos por ID |
+| GET | `/recommend/{user_id}?n=20` | Recomendaciones personalizadas para usuario conocido |
+| GET | `/users/{user_id}/exists` | Verifica si un usuario existe en el sistema |
+| GET | `/onboarding/products` | Un producto representativo por cluster (para onboarding) |
+| GET | `/onboarding/recommend/{cluster_id}?n=20` | Recomendaciones para usuario nuevo según cluster elegido |
+| GET | `/records` | Todos los eventos registrados |
+| GET | `/records/{user_id}` | Eventos de un usuario específico |
+| POST | `/records` | Registrar un nuevo evento de interacción |
+
+### Ejemplo de respuesta — `/recommend/{user_id}`
+
+```json
+{
+  "user_id": 1515915625353226922,
+  "known_user": true,
+  "recommendations": [
+    {
+      "product_id": 1005135,
+      "score": 0.87,
+      "method": "ALS+semantic",
+      "brand": "samsung",
+      "price": 299.99,
+      "category": "electronics.smartphone"
+    }
+  ]
+}
+```
+
+### Ejemplo de body — `POST /records`
+
+```json
+{
+  "event_time": "2026-05-20T10:00:00Z",
+  "event_type": "view",
+  "product_id": 1005135,
+  "category_id": 2053013555631882655,
+  "category_code": "electronics.smartphone",
+  "brand": "samsung",
+  "price": 299.99,
+  "user_id": 1515915625353226922,
+  "user_session": "abc-123",
+  "category_inferred": false,
+  "brand_inferred": false
+}
 ```
 
 ## 📌 Resultados Esperados
