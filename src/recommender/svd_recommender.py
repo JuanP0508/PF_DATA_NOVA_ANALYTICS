@@ -132,9 +132,32 @@ def _recomendar_nuevo_usuario(n=20):
     recs["method"] = "global-popular"
     return recs.reset_index(drop=True)
 
+_NIVEL3_SKIP = {"cartridge", "cartrige", "ink", "toner", "battery", "paper", "refill"}
+
+def _diversify(df, max_per_cat=3):
+    """Limita a max_per_cat productos por nivel3 para evitar sesgo de categoría."""
+    merged = df.merge(_product_taxonomy[["product_id", "nivel3_norm"]], on="product_id", how="left")
+    merged["nivel3_norm"] = merged["nivel3_norm"].fillna("other")
+    counts = {}
+    keep = []
+    for _, row in merged.iterrows():
+        cat = row["nivel3_norm"]
+        counts[cat] = counts.get(cat, 0) + 1
+        if counts[cat] <= max_per_cat:
+            keep.append(row["product_id"])
+    return df[df["product_id"].isin(keep)].reset_index(drop=True)
+
 def _recomendar_por_cluster(cluster_id, n=20):
-    recs = _cold_start_recs[_cold_start_recs["cluster_id"] == cluster_id].copy()
-    recs = recs.head(n)[["product_id", "score_cluster"]].rename(columns={"score_cluster": "score"})
+    all_recs = (_cold_start_recs[_cold_start_recs["cluster_id"] == cluster_id]
+                .copy()
+                .rename(columns={"score_cluster": "score"})
+                .sort_values("score", ascending=False))
+    diverse = _diversify(all_recs, max_per_cat=3)
+    # Si la diversidad no alcanza n, rellenar con productos restantes
+    if len(diverse) < n:
+        extra = all_recs[~all_recs["product_id"].isin(diverse["product_id"])]
+        diverse = pd.concat([diverse, extra], ignore_index=True)
+    recs = diverse.head(n)[["product_id", "score"]]
     recs["method"] = f"cluster-{cluster_id}"
     return recs.reset_index(drop=True)
 
@@ -203,16 +226,18 @@ def get_onboarding_products():
     used_products, used_categories = set(), set()
     rows = []
     ranked = _cold_start_recs.sort_values("score_cluster", ascending=False)
+    _n3_map = _product_taxonomy.set_index("product_id")["nivel3_norm"].to_dict()
 
     for cluster_id in sorted(_cold_start_recs["cluster_id"].unique()):
         cluster_ranked = ranked[ranked["cluster_id"] == cluster_id]
         chosen = None
 
-        # Intentar producto con categoría no usada todavía
+        # Intentar producto con categoría no usada y que no sea nivel3 no visual
         for _, row in cluster_ranked.iterrows():
             pid = int(row["product_id"])
             cat = _product_category_map.get(pid, f"_unk_{pid}")
-            if pid not in used_products and cat not in used_categories:
+            n3 = _n3_map.get(pid, "")
+            if pid not in used_products and cat not in used_categories and n3 not in _NIVEL3_SKIP:
                 chosen = {"cluster_id": int(cluster_id), "product_id": pid,
                           "score": float(row["score_cluster"])}
                 used_products.add(pid)
