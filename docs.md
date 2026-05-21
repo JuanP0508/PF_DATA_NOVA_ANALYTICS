@@ -1,6 +1,6 @@
 # 🚀 Arquitectura y Desarrollo de un Sistema Híbrido de Recomendación para E-commerce
 
-## . 📑 Índice
+## 📑 Índice
 
 1. Introducción
 2. Objetivo del Proyecto
@@ -14,10 +14,12 @@
 8. Sistema Híbrido de Recomendación
 9. Semantic Re-ranking
 10. Evaluación Experimental
-11. Resultados y Hallazgos
-12. Limitaciones del Proyecto
-13. Futuras Mejoras
-14. Conclusiones
+11. API REST — Arquitectura y Endpoints
+12. Frontend Streamlit — Tienda Interactiva y Monitor de Salud
+13. Resultados y Hallazgos
+14. Limitaciones del Proyecto
+15. Futuras Mejoras
+16. Conclusiones
 
 
 # 1. 📌 Introducción
@@ -142,23 +144,17 @@ Para los registros sin marca, se define una regla basada en la estructura de la 
 
 Se asigna una marca genérica compuesta por el prefijo "generic." seguido del último nivel de la categoría.
 
----
-
-## Análisis y Estructuración de Categorías
+### Análisis y Estructuración de Categorías
 
 Después del proceso de limpieza e inferencia de `category_code`, se realizó un análisis de su estructura jerárquica para comprender cómo están organizadas las categorías y preparar el dataset para su posterior transformación.
 
 Las categorías siguen un formato jerárquico delimitado por puntos (`.`), donde cada nivel representa un mayor grado de especificidad (por ejemplo: `electronics.telephone.accessory`).
-
----
 
 ### Análisis de la estructura
 
 Para identificar la profundidad de las categorías, se contabilizó el número de puntos (`.`) presentes en cada valor de `category_code`, lo cual permite determinar el número de niveles jerárquicos.
 
 Adicionalmente, se exploraron ejemplos representativos por cada nivel para validar la consistencia de la estructura.
-
----
 
 ### Resultados
 
@@ -180,8 +176,6 @@ Ejemplos identificados:
 * **Nivel 3:**
   `electronics.audio.music_tools.piano`
 
----
-
 ### Interpretación
 
 A partir de estos resultados se concluye que:
@@ -191,13 +185,9 @@ A partir de estos resultados se concluye que:
 * El **nivel 1** agrupa categorías más generales, útiles para segmentaciones amplias.
 * El **nivel 3**, aunque más específico, tiene muy baja representación, lo que puede generar problemas de dispersión (sparsity) en el modelo.
 
----
-
 ### Implicaciones para el modelado
 
 La variabilidad en la profundidad de las categorías hace necesario estandarizar su estructura. Utilizar niveles demasiado específicos podría afectar negativamente el rendimiento del sistema de recomendación, mientras que niveles muy generales pueden perder capacidad descriptiva.
-
----
 
 ### Decisión de transformación
 
@@ -246,6 +236,7 @@ La eliminación de duplicados se realizó únicamente sobre filas completamente 
    Asimismo, la normalización contextual permitió reducir ambigüedades semánticas, mejorando la coherencia de las categorías y fortaleciendo la capacidad del sistema de recomendación. 
    
    En conjunto, este pipeline establece una base sólida que optimiza el rendimiento del modelo, mejora la interpretabilidad y habilita análisis más precisos y escalables.
+---
 
 # 5. 📊 EDA: Análisis del Comportamiento de Compra en E-commerce
 
@@ -508,7 +499,7 @@ El reporte de columnas en consola confirma que los conjuntos de datos están lis
 ### 4. Robustez del Pipeline de Datos
 * **Idempotencia garantizada:** Los bloques de control condicional previenen fallos lógicos por ejecuciones fuera de orden en entornos de producción o desarrollo.
 * **Integridad transplataforma:** La exportación final con máscara `utf-8-sig` y eliminación de índices artificiales asegura compatibilidad absoluta entre sistemas Windows, Linux y macOS.
-
+---
 # 7. 📊 K-Means para Segmentación de Usuarios
 
 ### Descripción general
@@ -607,6 +598,7 @@ El Biplot revelar qué categorías de productos definen la posición y separaci�
 
 La segmentación demuestra que el comportamiento de los usuarios en el e-commerce no es homogéneo, sino que se divide principalmente en usuarios de alto valor orientados a tecnología y usuarios de bajo valor enfocados en categorías más generales. Esta diferenciación permite diseñar estrategias altamente personalizadas, optimizar la conversión y construir una base sólida para futuros modelos de recomendación y crecimiento del negocio.
 
+---
 # 8. 📊 Gaussian Mixture Model (GMM) para Segmentación de Usuarios
 
 ### Descripción general
@@ -735,6 +727,7 @@ Los clusters obtenidos pueden utilizarse para:
 ### Conclusión del Gaussian Mixture Model (GMM)
 El Gaussian Mixture Model permitió transformar variables agregadas de comportamiento en segmentos interpretables de usuarios. El resultado final constituye una base sólida para análisis avanzados de usuarios y un complemento o refuerzo para el sistema de recomendaciones personalizadas.
 
+---
 # 9. 📊 Sistema Híbrido de Recomendación con ALS, Clustering y Re-ranking Taxonómico
 
 ## Descripción general
@@ -772,7 +765,7 @@ Usuario entra al sistema
     └── Tier 2 (>5 interacciones)
         └── ALS + semantic reranking
 ```
-## Objetivo general del enfoque híbrido
+### Objetivo general del enfoque híbrido
 
 El sistema parte de una premisa importante:
 
@@ -929,15 +922,11 @@ Esto permite conectar recomendaciones con semántica de producto.
 
 *   _score_items(): Calcula el score ALS mediante `item_matrix @ user_vector` produciendo afinidad usuario-producto.
 
----
-
 ## RE-RANKING SEMÁNTICO
 
 ## Objetivo
 
 Aplicar una capa semántica (de clasificación de productos) sobre los candidatos generados por ALS.
-
----
 
 ## Función `_semantic_rerank()`
 
@@ -949,15 +938,11 @@ Esta función recibe:
 | product_id | Producto |
 | score | Score ALS |
 
----
-
 ### Paso 1 — Normalización del score ALS
 
 El score ALS puede variar entre usuarios. Por ello, primero se normaliza entre 0 y 1.
 
 Esto genera `score_norm`.
-
----
 
 ### Paso 2 — Agregar taxonomía
 
@@ -967,8 +952,6 @@ Cada producto recomendado recibe:
 - `nivel2_norm`
 - `nivel3_norm`
 
----
-
 ### Paso 3 — Agregar preferencias del usuario
 
 El sistema consulta el perfil taxonómico del usuario y obtiene:
@@ -976,8 +959,6 @@ El sistema consulta el perfil taxonómico del usuario y obtiene:
 - `pref_nivel1`
 - `pref_nivel2`
 - `pref_nivel3`
-
----
 
 ### Paso 4 — Construcción del score taxonómico
 
@@ -989,8 +970,6 @@ El score taxonómico se calcula mediante:
 
 Los pesos fueron obtenidos experimentalmente mediante Grid Search (ver notebook `Evaluacion_reranking_semantico.ipynb`).
 
----
-
 ### Paso 5 — Score híbrido final
 
 El score final combina:
@@ -1001,8 +980,6 @@ El score final combina:
 | Taxonomía | 0.6 |
 
 Estos pesos también fueron obtenidos experimentalmente de manera que optimizaran las métricas de desempeño del modelo (ver notebook `Evaluacion_reranking_semantico.ipynb`).
-
----
 
 ### Paso 6 — Re-ranking final
 
@@ -1018,8 +995,6 @@ Resolver cold start total.
 *  Recomendación por cluster: La función `_recomendar_por_cluster()` permite obtener recomendaciones específicas por cluster.
 *  Función principal `recomendar()`: Esta función controla toda la lógica de decisión del sistema.
 
----
-
 ## Tier 1. Usuarios con 1–5 interacciones
 
 ## Objetivo
@@ -1030,24 +1005,17 @@ Combinar ALS, re-ranking semántico (por clasificación de productos) y clusteri
 
 El usuario es clasificado como activo o pasivo (los dos clusters resultantes del modelo GMM).
 
----
-
 ### Paso 2 — Generación ALS
 
 El sistema genera el top100 candidatos ALS.
 
 El uso de 100 candidatos permite que la capa taxonómica tenga margen para modificar el ranking.
 
----
-
 ### Paso 3 — Semantic reranking
 
 ```python
 als_df = _semantic_rerank(als_df, user_id)
 ```
-
----
-
 ### Paso 4 — Mezcla ALS + cluster
 
 ### Usuarios activos
@@ -1060,13 +1028,9 @@ als_df = _semantic_rerank(als_df, user_id)
 - 30% ALS
 - 70% cluster
 
----
-
 ### Paso 5 — Combinación final
 
 Las recomendaciones ALS re-rankeadas y cluster se concatenan.
-
----
 
 ## Tier 2. Usuarios con suficiente historial
 
@@ -1078,14 +1042,9 @@ Aplicar ALS completo + semantic reranking.
 ```text 
 ALS → top100 → semantic reranking → top final  
 ```
-
----
-
 ## Interfaz API
 
 `get_top_n_recommendations()`: Convierte recomendaciones a formato serializable.
-
----
 
 ## Onboarding
 
@@ -1095,15 +1054,11 @@ ALS → top100 → semantic reranking → top final
 
 *  El sistema intenta evitar productos repetidos y categorías repetidas.
 
----
-
 ## Funciones auxiliares finales
 
 `recomendar_por_cluster()`: Obtiene recomendaciones específicas de cluster.
 
 `is_known_user()`: Verifica si un usuario existe en el sistema.
-
----
 
 ## Conclusión del Sistema Híbrido de Recomendación
 
@@ -1111,6 +1066,7 @@ El sistema híbrido implementado combina collaborative filtering, dos tipos de c
 
 Los resultados experimentales demostraron que la incorporación de información de clasificación del producto mejora el desempeño del sistema sin reemplazar el modelo colaborativo principal.
 
+---
 # 10. 📊 Evaluación Experimental del Re-ranking Semántico
 
 ## Descripción general
@@ -1121,15 +1077,11 @@ El objetivo principal del experimento fue determinar si la incorporación de inf
 
 La evaluación se realizó utilizando las métricas estándar de sistemas de recomendación, `Precision@10` y `Recall@10`, comparando ALS puro y ALS + re-ranking semántico.
 
----
-
 ## Hipótesis del experimento
 
 La hipótesis principal fue:
 
 > Los modelos colaborativos como ALS presentan limitaciones. Incorporar afinidad categórica basada en categorías de producto puede ayudar a rescatar coherencia semántica y mejorar las recomendaciones.
-
----
 
 ## Motivación conceptual
 
@@ -1143,16 +1095,12 @@ nivel2 → categoría intermedia
 nivel3 → categoría específica
 ```
 
----
-
 ## Objetivo del notebook
 
 El notebook tiene dos objetivos principales. Luego de construir perfiles de clasificación de productos por usuario y de aplicar un re-ranking semántico, se pretende:
 
 1. Evaluar experimentalmente el impacto en `Precision@10` y `Recall@10`, comparándolo con las recomendaciones de ALS sin re-ranking semántico.
 2. Optimizar pesos mediante grid search.
-
----
 
 ## Estructura general del pipeline
 
@@ -1174,15 +1122,11 @@ Top10 final
 Evaluación Precision@10 / Recall@10
 ```
 
----
-
 ## 1. Split temporal Train/Test
 
 ### Objetivo
 
 Evitar data leakage y garantizar evaluación realista.
-
----
 
 ### Estrategia utilizada
 
@@ -1199,21 +1143,15 @@ Esto asegura que:
 - los perfiles de clasificación de productos se construyan solo con train,
 - el test represente interacciones futuras reales.
 
----
-
 ### Ground truth
 
 El conjunto de test se utilizó como un “ground truth” temporal para evaluar si los productos recomendados coincidían con productos realmente consumidos posteriormente por el usuario.
-
----
 
 ## 2. Construcción de interacciones ponderadas
 
 ### Objetivo
 
 Asignar distinta importancia a distintos tipos de interacción.
-
----
 
 ## Pesos utilizados
 
@@ -1225,13 +1163,9 @@ Asignar distinta importancia a distintos tipos de interacción.
 
 La lógica detrás de esta ponderación es asumir que una compra representa una afinidad más fuerte que una simple visualización.
 
----
-
 ### Resultado
 
 Se construyó una matriz usuario-producto ponderada utilizada posteriormente para entrenar ALS.
-
----
 
 ## 3. Entrenamiento ALS
 
@@ -1239,29 +1173,21 @@ Se construyó una matriz usuario-producto ponderada utilizada posteriormente par
 
 Construir el recomendador colaborativo base.
 
----
-
 ### Modelo utilizado
 
 ### Alternating Least Squares (ALS)
 
 ALS fue seleccionado tras compararse contra SVD debido a mejores métricas sobre el dataset.
 
----
-
 ### Rol de ALS
 
 ALS actúa como generador inicial de candidatos. No produce directamente las recomendaciones finales del experimento, sino el top100 candidatos que posteriormente son refinados por la capa de clasificación de productos.
-
----
 
 ## 4. Construcción de perfiles taxonómicos
 
 ### Objetivo
 
 Construir preferencias semánticas de usuario basadas en categorías de producto.
-
----
 
 ### Niveles taxonómicos
 
@@ -1272,8 +1198,6 @@ El sistema utilizó tres niveles:
 | nivel1 | Categoría amplia |
 | nivel2_norm | Categoría intermedia |
 | nivel3_norm | Categoría específica |
-
----
 
 ### Construcción del perfil
 
@@ -1287,15 +1211,11 @@ Esto produjo la tabla (`dataframe`) `taxonomy_preference`, representando afinida
 
 Los perfiles taxonómicos fueron construidos solo usando TRAIN y nunca utilizando interacciones futuras del test. Esto garantiza una evaluación válida y libre de data leakage.
 
----
-
 ## 5. Construcción del score taxonómico
 
 ### Objetivo
 
 Asignar un score semántico a cada recomendación ALS.
-
----
 
 ### Proceso
 
@@ -1311,8 +1231,6 @@ Posteriormente, se consultó el perfil taxonómico del usuario para obtener:
 - afinidad hacia `nivel2`,
 - afinidad hacia `nivel3`.
 
----
-
 ### Score taxonómico
 
 El score taxonómico (de clasificación de productos) se calculó como:
@@ -1324,39 +1242,28 @@ W2 * nivel2 +
 W3 * nivel3
 ```
 
----
-
 ## 6. Score híbrido final
 
 ### Objetivo
 
 Combinar señal colaborativa y señal semántica.
 
----
-
 ### Fórmula
 
 ```text
 score_final = (alpha * ALS) + (beta * clasificación)
 ```
-
----
-
 ### Normalización ALS
 
 El score ALS fue normalizado entre 0 y 1 por usuario antes de combinarlo con la señal taxonómica.
 
 Esto permitió que ambas señales operaran sobre la misma escala.
 
----
-
 ## 7. Re-ranking final
 
 ### Objetivo
 
 Reordenar candidatos ALS utilizando el score híbrido.
-
----
 
 ### Flujo final
 
@@ -1372,15 +1279,11 @@ re-ranking
 top10 final
 ```
 
----
-
 ### ¿Por qué top100?
 
 Inicialmente se consideró usar ALS top10. Sin embargo, esto no permite que la taxonomía modifique realmente el conjunto final de recomendaciones.
 
 Usando ALS top100, la capa taxonómica puede rescatar productos inicialmente ubicados fuera del top10.
-
----
 
 ## 8. Evaluación experimental
 
@@ -1390,13 +1293,9 @@ Usando ALS top100, la capa taxonómica puede rescatar productos inicialmente ubi
 
 Mide qué proporción de los 10 productos recomendados fueron realmente relevantes.
 
----
-
 *  ### Recall@10
 
 Mide qué proporción de todos los productos relevantes del usuario fueron recuperados dentro del top10.
-
----
 
 ## Resultados iniciales
 
@@ -1407,8 +1306,6 @@ La incorporación de la clasificación de los productos produjo mejoras simultá
 
 Esto fue particularmente importante porque normalmente mejorar una métrica suele degradar la otra.
 
----
-
 ## 9. Grid Search — pesos ALS vs Clasificación
 
 ### Objetivo
@@ -1417,8 +1314,6 @@ Determinar cuánto peso asignar a:
 
 - ALS,
 - taxonomía.
-
----
 
 ### Hallazgo principal
 
@@ -1431,15 +1326,11 @@ El sistema híbrido superó al ALS puro. El mejor punto encontrado fue:
 
 Esto indica que la taxonomía aporta señal muy fuerte, pero ALS sigue aportando refinamiento colaborativo útil.
 
----
-
 ## 10. Grid Search — pesos internos taxonomía
 
 ### Objetivo
 
 Determinar qué nivel taxonómico aporta más información.
-
----
 
 ### Hallazgo principal
 
@@ -1455,15 +1346,11 @@ Inicialmente se esperaba que los niveles más específicos fueran demasiado disp
 
 Esto sugiere que los usuarios mantienen preferencias muy específicas y consistentes dentro del catálogo.
 
----
-
 ## 11. Evaluación por tipo de usuario
 
 ### Objetivo
 
 Determinar en qué tipo de usuario la taxonomía aporta más valor.
-
----
 
 ### Segmentación
 
@@ -1474,13 +1361,9 @@ Los usuarios fueron separados en:
 | Sparse | ≤5 interacciones |
 | Activos | >5 interacciones |
 
----
-
 ### Hallazgo principal
 
 La capa de clasificación de productos mejoró ambos grupos, pero mejoró más a los usuarios sparse.
-
----
 
 ### Interpretación conceptual
 
@@ -1488,250 +1371,188 @@ Esto valida directamente la hipótesis principal del proyecto:
 
 > La información taxonómica compensa parcialmente las limitaciones del collaborative filtering en escenarios de baja interacción.
 
----
-
 ## Conclusión de la Evaluación Experimental del Re-ranking Semántico
 
 El experimento validó que la clasificación jerárquica aporta una señal útil a la hora de predecir y generar recomendaciones, siendo este complementario con el modelo ALS, y que las mejoras son especialmente relevantes en usuarios sparse.
 
 El notebook demuestra experimentalmente que incorporar estructura semántica mediante taxonomía de productos puede mejorar significativamente sistemas de recomendación colaborativos en escenarios reales de e-commerce.
 
-# 11. 📌 Resultados y Hallazgos
-
-El proyecto permitió construir un sistema híbrido de recomendación capaz de abordar problemas típicos de e-commerce como:
-
-- baja personalización,
-- sparse data,
-- y cold start de usuarios.
-
-A través de técnicas de clustering, collaborative filtering y re-ranking semántico, se logró mejorar la relevancia de las recomendaciones y comprender mejor el comportamiento de los usuarios.
-
-### 1. Hallazgos del Negocio (EDA)
-
-El principal problema no está en finalizar la compra, sino en lograr que el usuario encuentre productos suficientemente relevantes para agregarlos al carrito.
-
-Esto justifica directamente la necesidad de un sistema de recomendación más preciso.
-
-### 2. Problema Crítico: Cold Start
-
-Métrica	Resultado
-Usuarios con ≤ 5 eventos	94%
-Mediana de eventos por usuario	1
-
-Esto indica que la mayoría de usuarios tienen muy poca interacción histórica, generando un escenario extremo de cold start y alta dispersión en la matriz usuario-producto.
-
-### 3. Resultados del Pipeline de Datos
-
-El pipeline permitió:
-
-reducir valores nulos,
-recuperar categorías faltantes mediante inferencia,
-mejorar consistencia semántica,
-y estructurar las categorías jerárquicas para el modelado.
-
-Además, se identificó que el:
-
-nivel 2
-
-representaba el mejor equilibrio entre granularidad y estabilidad para el sistema de recomendación
-
-### 4. Resultados del Clustering
-
-Los modelos K-Means y GMM identificaron consistentemente:
-
-k=2
-
-segmentos principales de usuarios.
-
-***Cluster 1:***
-- Usuarios Tecnológicos / Alto Valor
-- mayor interacción,
-- mayor actividad de compra,
-- afinidad hacia tecnología,
-- comportamiento más recurrente.
-
-***Cluster 0:***
-- Usuarios Generales / Bajo Valor
-- menor engagement,
-- navegación más superficial,
-- menor frecuencia de compra.
-- Hallazgo principal
-
-Los usuarios con afinidad tecnológica mostraron mayor valor comercial y mayor profundidad dentro del funnel.
-
-### 5. Resultados del Sistema de Recomendación
-
-ALS fue seleccionado como modelo principal tras superar a SVD en desempeño y estabilidad sobre datos implícitos.
-
-Sin embargo, el hallazgo más importante fue que:
-
-la incorporación de información semántica mejoró el rendimiento del recomendador.
-
-### 6. Éxito del Re-ranking Semántico
-
-El sistema híbrido ALS + taxonomía logró mejorar simultáneamente:
-
-**Precision@K** y **Recall@K**
-
-Esto demuestra que la clasificación jerárquica de productos aporta señal útil complementaria al collaborative filtering.
-
-### 7. Hallazgo Más Importante
-
-El Grid Search mostró que el mejor balance fue:
-
-| Componente | Peso |
-|---|---|
-| ALS | 0.4 |
-| Taxonomía | 0.6 |
-
-Esto indica que la estructura semántica del catálogo aporta una señal extremadamente fuerte para la recomendación.
-
-### 8. Conclusión General
-
-El proyecto demuestra que combinar:
-
-- ALS,
-- clustering,
-- feedback implícito,
-- y semantic re-ranking
-
-permite construir un sistema de recomendación más robusto, interpretable y adaptable a escenarios reales de e-commerce con sparse data y cold start.
-
-# 12. 📌Limitaciones del Proyecto
-
-el proyecto presenta varias limitaciones técnicas y analíticas propias de los sistemas de recomendación basados en datos implícitos y escenarios reales de e-commerce.
-
-### 1. Sparse Data Extrema
-
-La principal limitación del proyecto es la alta dispersión de la matriz usuario-producto.
-
-La mayoría de usuarios presentan muy pocas interacciones:
-
-94% ≤ 5 interacciones
-
-Esto limita significativamente la capacidad de los modelos colaborativos para aprender patrones robustos y generalizables.
-
-### 2. Dataset Limitado Temporalmente
-
-El dataset cubre un periodo relativamente corto:
-
-septiembre 2020 → febrero 2021.
-
-Esto limita: el análisis de comportamiento a largo plazo,
-la detección de cambios estacionales más complejos,
-y el modelado de ciclos prolongados de consumo.
-
-### 3. Falta de Variables Contextuales
-
-El sistema no incorpora variables externas como:
-
-- ubicación geográfica,
-- dispositivo,
-- campañas de marketing,
-- clima,
-- promociones,
-- o contexto de navegación.
-
-Por lo tanto, las recomendaciones se basan únicamente en comportamiento histórico e interacción con productos.
-
-# 13. Futuras Mejoras
-
-Aunque el sistema híbrido desarrollado logró resultados sólidos en escenarios de sparse data y cold start, existen múltiples oportunidades de mejora tanto a nivel técnico como de negocio.
-
-### 1. Incorporación de Modelos Deep Learning
-
-Una posible evolución del sistema consiste en integrar arquitecturas más avanzadas basadas en Deep Learning, como:
-
-- Neural Collaborative Filtering (NCF),
-- Autoencoders,
-- Transformers para recomendación,
-- o modelos secuenciales como LSTM/GRU.
-
-Estos enfoques permitirían capturar patrones de comportamiento más complejos y relaciones no lineales entre usuarios y productos.
-
-### 3. Evaluación Online y A/B Testing
-
-El proyecto fue evaluado únicamente en entorno offline. Una mejora importante sería implementar:
-
-- pruebas A/B,
-- métricas de negocio reales,
-- y monitoreo en producción.
-
-Esto permitiría medir impacto real sobre:
-
-- CTR,
-- conversión,
-- retención,
-- ticket promedio,
-- y satisfacción del usuario.
-
-### 4. Sistema de Recomendación en Tiempo Real
-
-Actualmente el sistema funciona principalmente sobre datos históricos procesados por lotes (batch processing).
-
-Una mejora futura sería incorporar:
-
-- streaming de eventos,
-- actualización online de perfiles,
-- y recomendaciones en tiempo real.
-
-Esto permitiría reaccionar inmediatamente a cambios recientes en el comportamiento del usuario.
-
-### 5. Incorporación de Variables Contextuales
-
-El sistema podría enriquecerse incluyendo información adicional como:
-
-- ubicación geográfica,
-- dispositivo utilizado,
-- temporalidad,
-- promociones activas,
-- campañas de marketing,
-- o contexto de navegación.
-
-Esto permitiría evolucionar hacia sistemas de recomendación context-aware.
-
-### 4. Sistema Híbrido Más Complejo
-
-El sistema actual combina ALS + clustering + semantic re-ranking. Futuramente podrían integrarse nuevas señales como:
-
-- popularidad temporal,
-- tendencias,
-- co-visitas,
-- sesiones de navegación,
-- o grafos usuario-producto.
-
-Esto permitiría construir un recomendador aún más robusto y dinámico.
-
-# 14. Conclusiones
-
-El desarrollo de este proyecto permitió construir un sistema híbrido de recomendación orientado a un entorno real de e-commerce, integrando procesos de limpieza de datos, análisis exploratorio, feature engineering, segmentación de usuarios y modelos avanzados de recomendación.
-
-A lo largo del análisis se identificó que la plataforma presenta un escenario extremo de ***sparse data*** y ***cold start***, donde la mayoría de los usuarios tienen muy pocas interacciones históricas. Este hallazgo fue determinante para diseñar una arquitectura híbrida capaz de complementar las limitaciones del collaborative filtering tradicional.
-
-El pipeline de datos permitió mejorar significativamente la calidad y consistencia del dataset mediante procesos de inferencia de categorías, normalización jerárquica y construcción de variables de comportamiento. Estas transformaciones hicieron posible representar de forma más precisa los patrones de navegación y consumo de los usuarios.
-
-La segmentación mediante K-Means y Gaussian Mixture Models demostró que el comportamiento de los clientes no es homogéneo, identificando perfiles claramente diferenciados entre usuarios tecnológicos de alto valor y usuarios de interacción más general o exploratoria. Esto genera oportunidades importantes para estrategias de personalización y marketing segmentado.
-
-En cuanto al sistema de recomendación, ALS mostró un mejor desempeño frente a SVD en escenarios de feedback implícito. Sin embargo, el hallazgo más importante del proyecto fue comprobar experimentalmente que la incorporación de información semántica basada en taxonomía de productos mejora el desempeño del recomendador.
-
-El semantic re-ranking logró aumentar simultáneamente métricas como Precision@10 y Recall@10, especialmente en usuarios con pocas interacciones, validando que la información categórica ayuda a compensar parcialmente las debilidades del collaborative filtering en escenarios sparse.
-
-Adicionalmente, el proyecto permitió evidenciar que los usuarios mantienen afinidades muy específicas dentro del catálogo, y que las categorías más detalladas aportan una señal semántica altamente relevante para la recomendación.
-
-Finalmente, el sistema desarrollado demuestra que combinar:
-
-- collaborative filtering,
-- clustering,
-- feedback implícito,
-- y re-ranking semántico
-
-permite construir soluciones de recomendación más robustas, interpretables y adaptadas a problemas reales de e-commerce.
-
-El proyecto establece una base sólida para futuras mejoras orientadas a sistemas en tiempo real, modelos basados en Deep Learning y arquitecturas escalables de producción.
-
 ---
+# 11. 🌐 API REST — Arquitectura y Endpoints
 
-# 15. 🌐 API REST — Arquitectura y Endpoints
+Click & Tech es una plataforma de e-commerce con recomendaciones personalizadas basadas en machine learning. El proyecto combina dos componentes principales: una API REST construida con FastAPI que funciona como el motor de recomendaciones y gestión de datos, y un frontend desarrollado con Streamlit que proporciona la interfaz visual interactiva para los clientes. El objetivo central es predecir y sugerir productos relevantes a cada usuario basándose en su historial de navegación, compras e intereses.
+
+## Arquitectura y Propósito de los Componentes
+
+El proyecto está dividido en dos partes fundamentales que trabajan juntas pero de manera independiente. La API REST actúa como el corazón computacional del sistema, permitiendo que la lógica de recomendación sea reutilizable por múltiples clientes y fácilmente escalable en entornos de producción. Esta separación arquitectónica permite que otros sistemas o aplicaciones móviles puedan consumir el mismo motor de recomendaciones sin necesidad de reimplementar la lógica. La API es stateless, puede ser containerizada con Docker y desplegada en servidores cloud sin complicaciones, proporcionando una solución enterprise-grade.
+
+```
+ARQUITECTURA DE COMPONENTES
+
+┌──────────────────────────────────────────────────────────────┐
+│                   FRONTEND (Streamlit)                       │
+│   - Interfaz visual interactiva                              │
+│   - Gestión de sesiones de usuario                           │
+│   - Carrito de compras                                       │
+│   - Registro de eventos locales                              │
+└──────────────────────┬───────────────────────────────────────┘
+                       │
+                       │ HTTP Requests
+                       │ (GET /recommend/{user_id})
+                       │ (GET /onboarding/products)
+                       │ (POST /records)
+                       │ (GET /products)
+                       ▼
+┌──────────────────────────────────────────────────────────────┐
+│                  API REST (FastAPI)                          │
+│   - Lógica de recomendación                                  │
+│   - Gestión de datos                                         │
+│   - Endpoints públicos                                       │
+│   - Caché de productos                                       │
+└──────────────────────┬───────────────────────────────────────┘
+                       │
+                ┌──────┴──────┐
+                │             │
+                ▼             ▼
+        ┌──────────────┐  ┌──────────────┐
+        │ SVD Model    │  │ K-Means      │
+        │ (usuarios    │  │ (nuevos      │
+        │ conocidos)   │  │  usuarios)   │
+        └──────────────┘  └──────────────┘
+                │             │
+                └──────┬──────┘
+                       │
+                ┌──────┴──────┐
+                │             │
+                ▼             ▼
+        ┌──────────────┐  ┌──────────────┐
+        │ Product Data │  │ User Events  │
+        └──────────────┘  └──────────────┘
+```
+
+Streamlit, por su parte, es una herramienta diseñada especialmente para crear interfaces web sin necesidad de conocimientos profundos en desarrollo frontend. Proporciona una experiencia de usuario amigable donde usuarios no técnicos pueden interactuar completamente con el sistema. Los cambios en el código se reflejan inmediatamente en la interfaz sin necesidad de recargar, lo que hace que sea ideal para prototipado rápido y demostración del sistema. Streamlit se conecta directamente a la API mediante HTTP requests, consumiendo sus endpoints para obtener recomendaciones, catálogo de productos y guardando eventos de usuario.
+
+La decisión de usar ambas tecnologías juntas responde a un principio de arquitectura de software: separación de responsabilidades. El backend (API) se enfoca exclusivamente en lógica de negocio y cálculos complejos, mientras que el frontend (Streamlit) se encarga únicamente de presentación e interacción con el usuario. Esta separación también permite que el equipo de ciencia de datos pueda desarrollar y mejorar los modelos sin tocar el código de la interfaz de usuario.
+
+## Funcionalidades de la API
+
+La API REST proporciona cuatro funcionalidades principales que son el corazón del sistema de recomendación. El primer endpoint es GET /recommend/{user_id}, que retorna los productos más relevantes para un usuario conocido, utilizando un modelo de descomposición en valores singulares (SVD). Este endpoint requiere que el usuario tenga un historial previo en el sistema y considera múltiples factores como el historial de navegación, patrones de compra y similitud con otros usuarios.
+
+```
+FLUJO: GET /recommend/{user_id}
+
+1. Cliente solicita: GET /recommend/12345
+                       |
+                       v
+2. API recibe user_id=12345, n=20
+   |
+   ├─→ ¿Usuario está en la base de datos?
+   |   ├─ NO → Retorna error o lista vacía
+   |   └─ SÍ → Continúa
+   |
+   ├─→ Carga matriz de interacciones usuario-producto
+   |   |
+   |   ├─ Rows: usuarios
+   |   ├─ Cols: productos
+   |   └─ Valores: puntuación (0-5)
+   |
+   ├─→ Aplica modelo SVD
+   |   |
+   |   ├─ Descompone matriz en factores latentes
+   |   ├─ Calcula similitud usuario 12345 vs resto
+   |   └─ Identifica productos similares a los que compró
+   |
+   ├─→ Clasifica productos por puntuación
+   |
+   ├─→ Retorna top 20 productos
+                       |
+                       v
+3. JSON Response con recomendaciones
+   {
+     "user_id": 12345,
+     "known_user": true,
+     "recommendations": [
+       {"product_id": 101, "score": 0.95},
+       {"product_id": 245, "score": 0.87},
+       ...
+     ]
+   }
+```
+
+El segundo conjunto de endpoints está diseñado para el onboarding de nuevos usuarios. La ruta GET /onboarding/products devuelve un producto representativo de cada cluster de usuario, permitiendo que nuevos visitantes seleccionen el cluster que mejor representa sus intereses. Una vez que seleccionan su cluster, el endpoint GET /onboarding/recommend/{cluster_id} proporciona recomendaciones específicas basadas en ese grupo, permitiendo que usuarios sin historial obtengan sugerencias personalizadas desde su primer uso.
+
+```
+FLUJO: Onboarding de Nuevos Usuarios
+
+1. Usuario nuevo accede a Streamlit
+                       |
+                       v
+2. API: GET /onboarding/products
+   |
+   ├─→ Carga modelo K-Means (4 clusters)
+   |
+   ├─→ Por cada cluster (0, 1, 2, 3):
+   |   ├─ Selecciona producto más representativo
+   |   └─ Retorna su información
+   |
+   └─→ JSON con 4 productos (uno por cluster)
+                       |
+                       v
+3. Streamlit muestra 4 opciones de producto al usuario
+   [Cluster 0] [Cluster 1] [Cluster 2] [Cluster 3]
+                       |
+                       v
+4. Usuario selecciona el cluster que prefiere
+                       |
+                       v
+5. API: GET /onboarding/recommend/{cluster_id}?n=20
+   |
+   ├─→ user_id = cluster_id (0, 1, 2 ó 3)
+   |
+   ├─→ Retorna top 20 productos del cluster
+   |   (productos populares entre usuarios de ese cluster)
+   |
+   └─→ JSON con recomendaciones personalizadas
+                       |
+                       v
+6. Streamlit muestra dashboard con productos recomendados
+```
+
+El tercero es el catálogo de productos, accesible mediante GET /products que retorna todos los productos disponibles, y GET /products/lookup?ids=1,2,3 que permite búsquedas específicas por identificadores. Estos endpoints son fundamentales para que el frontend pueda mostrar información completa de cada producto, incluyendo precio, marca y categoría.
+
+Finalmente, está el sistema de registro de eventos con los endpoints GET /records/{user_id} que retorna el historial de interacciones de un usuario y POST /records que guarda nuevos eventos. Los eventos pueden ser visualizaciones de producto, clicks, agregar al carrito o compras completadas. Este registro es crítico porque alimenta continuamente el modelo con datos nuevos, permitiendo que las recomendaciones mejoren con el tiempo a medida que se acumula más información sobre el comportamiento de los usuarios.
+
+```
+FLUJO: Registro de Eventos (POST /records)
+
+Usuario en Streamlit hace acción
+(view, click, add_to_cart, purchase)
+                       |
+                       v
+Evento se construye en memoria:
+{
+  "event_time": "2026-05-20 14:30:45",
+  "event_type": "click",
+  "product_id": 245,
+  "user_id": 12345,
+  "price": 29.99,
+  "brand": "TechBrand",
+  "category_code": "electronics.telephone.accessory"
+}
+                       |
+                       v
+POST /records con evento
+                       |
+                       v
+API recibe y valida evento
+                       |
+                       v
+Agrega fila a events_final.csv
+                       |
+                       v
+Retorna confirmación:
+{"message": "Record saved successfully"}
+```
 
 ## Descripción General
 
@@ -1857,7 +1678,411 @@ uvicorn api.main:app --reload
 
 ---
 
-# 16. 🖥️ Frontend Streamlit — Tienda Interactiva y Monitor de Salud
+# 12. 🌐 Frontend Streamlit — Tienda Interactiva y Monitor de Salud
+
+Streamlit implementa la interfaz visual que consume todos los servicios proporcionados por la API. El sistema maneja dos flujos de usuario completamente diferentes basados en si el usuario es nuevo o si tiene un historial previo en la plataforma. Para usuarios nuevos, el sistema detecta automáticamente que no tiene información previa y los lleva a un onboarding guiado donde se presentan productos representativos de cuatro clusters diferentes, identificados mediante K-Means. El usuario explora estas cuatro opciones y selecciona la que mejor refleja su perfil o interés, momento en el cual el sistema obtiene recomendaciones especializadas para ese cluster.
+
+```
+FLUJO DE USUARIO EN STREAMLIT
+
+┌─────────────────────────────────────────┐
+│   Usuario accede a Streamlit             │
+│   (http://localhost:8501)                │
+└────────────┬────────────────────────────┘
+             │
+             v
+    ¿Ingresa User ID?
+    /        |        \
+   /         |         \
+NO/       VACÍO      SÍ/
+ /          |         \
+v           v          v
+│    ┌─────────────┐   │
+│    │ ¿Es nuevo?  │   │
+│    └─────────────┘   │
+│      SÍ/    \NO      │
+│      /       \       │
+│     v         v      │
+│    ONBOARDING    USUARIO CONOCIDO
+│    │             │
+│    │             ├─→ Obtiene recomendaciones
+│    │             │   basadas en historial
+│    │             │   (GET /recommend/{user_id})
+│    │             │
+│    │             └─→ Muestra grid de
+│    │                 productos personalizados
+│    │
+│    └─→ Muestra 4 productos
+│        (uno por cluster)
+│        │
+│        v
+│    Usuario selecciona
+│    cluster de interés
+│    │
+│    ├─→ Obtiene top 20 productos
+│    │   del cluster elegido
+│    │   (GET /onboarding/recommend/{cluster_id})
+│    │
+│    └─→ Transición a Dashboard
+
+DASHBOARD (Ambos flujos convergen aquí)
+│
+├─→ Grid de productos personalizados
+│   - Imagen (con variantes rotadas)
+│   - Precio
+│   - Marca
+│   - Categoría
+│   - Botón: Agregar al carrito
+│
+├─→ Carrito de compras
+│   - Resumen de artículos
+│   - Total de monto
+│
+├─→ Historial de eventos
+│   - Tabla de interacciones
+│   - Timestamps
+│   - Tipos de evento
+│
+└─→ Todas las interacciones se registran
+    y se envían a la API (POST /records)
+```
+
+Para usuarios conocidos cuyo identificador es reconocido en el sistema, la experiencia es significativamente más personalizada. El sistema inmediatamente obtiene recomendaciones basadas en el análisis completo del historial del usuario, considerando todas sus interacciones previas. La interfaz muestra un grid de productos relevantes con información detallada de cada uno, incluyendo precio, marca y categoría. Una característica ingeniosa del sistema es la rotación automática de variantes de productos: si existe cable1.jpg, cable2.jpg y así sucesivamente, el sistema alterna entre estas variantes automáticamente para mostrar diferentes perspectivas del mismo producto.
+
+El carrito de compras integrado permite que los usuarios agreguen productos de interés y vean un resumen del total de monto. Cada interacción del usuario, ya sea una visualización de producto, un click, agregar al carrito o una compra completada, se registra como un evento que se envía a la API. Este registro continuo de eventos es fundamental para el sistema porque permite que el modelo de recomendación se mantenga actualizado y mejore continuamente a medida que aprende nuevos patrones de comportamiento. El historial de eventos se visualiza en la interfaz permitiendo que usuarios entiendan qué interacciones ha registrado el sistema.
+
+## Proceso de Ejecución
+
+Antes de ejecutar cualquier componente, es necesario instalar todas las dependencias del proyecto utilizando pip install -r requirements.txt. Este comando instalará FastAPI, Streamlit, scikit-learn, pandas y todas las otras librerías necesarias para que el sistema funcione correctamente.
+
+El siguiente paso importante es ejecutar el pipeline de datos mediante python run_pipeline.py. Este script ejecuta en secuencia varios notebooks Jupyter que realizan tareas críticas del proyecto. El pipeline comienza con la limpieza de los datos originales, inferencia de categorías faltantes, y transformación de características. Luego entrena el modelo K-Means para generar clusters de usuarios y el modelo ALS para recomendaciones personalizadas. Este paso puede tomar entre 5 y 15 minutos dependiendo de la capacidad del equipo y el tamaño del dataset. Es importante ejecutar este paso solo una vez, después de lo cual los datos procesados y modelos entrenados estarán listos.
+
+Una vez completado el pipeline, es necesario abrir dos terminales diferentes porque tanto la API como Streamlit necesitan ejecutarse en paralelo.
+
+```
+SECUENCIA DE EJECUCIÓN
+
+TERMINAL 1 (PowerShell / CMD)
+┌─────────────────────────────────┐
+│ $ pip install -r requirements.txt│
+│ (instala todas las librerías)    │
+│                                 │
+│ $ python run_pipeline.py         │
+│ (entrena modelos, procesa datos) │
+│ (⏱  5-15 minutos)                │
+│                                 │
+│ ✓ Pipeline completado           │
+│                                 │
+│ $ uvicorn api.main:app \         │
+│   --reload \                     │
+│   --host 0.0.0.0 \              │
+│   --port 8000                   │
+│                                 │
+│ Uvicorn running on              │
+│ http://127.0.0.1:8000           │
+│                                 │
+│ ✓ API ACTIVA                    │
+└─────────────────────────────────┘
+         ↓
+    ESPERA A QUE
+    API esté lista
+         ↓
+┌─────────────────────────────────┐
+│ TERMINAL 2 (PowerShell / CMD)    │
+│                                 │
+│ $ streamlit run \               │
+│   frontend_streamlit/app.py      │
+│                                 │
+│ Streamlit app opened in browser │
+│ Local URL: http://localhost:8501│
+│                                 │
+│ ✓ FRONTEND ACTIVO               │
+└─────────────────────────────────┘
+         ↓
+┌─────────────────────────────────┐
+│ ✓ SISTEMA COMPLETAMENTE ACTIVO  │
+│                                 │
+│ http://localhost:8501           │
+│ (Interfaz de usuario)           │
+│                                 │
+│ http://localhost:8000/docs      │
+│ (API documentation)             │
+└─────────────────────────────────┘
+```
+
+En la primera terminal, ejecute uvicorn api.main:app --reload --host 0.0.0.0 --port 8000 para iniciar el servidor API. Verá un mensaje indicando que Uvicorn está corriendo en http://127.0.0.1:8000. Puede verificar que la API está funcionando accediendo a http://localhost:8000 en su navegador, donde verá un mensaje de confirmación, o visitando http://localhost:8000/docs para acceder a la documentación interactiva de Swagger que permite probar todos los endpoints manualmente.
+
+En la segunda terminal, ejecute streamlit run frontend_streamlit/app.py para iniciar la interfaz de usuario. Streamlit abrirá automáticamente una ventana del navegador en http://localhost:8501 donde puede ver la aplicación completa. Es importante que ambos procesos estén ejecutándose simultáneamente para que el sistema funcione correctamente: si la API se detiene, Streamlit no podrá obtener recomendaciones y mostrará errores de conexión.
+
+## Estructura de Datos
+
+El proyecto organiza sus datos en tres niveles de procesamiento. La carpeta data/raw contiene el archivo events.csv que son los datos originales sin procesar, exactamente como fueron recolectados del sistema de e-commerce. La carpeta data/processed contiene los datos después de la transformación inicial, incluyendo el archivo inferido_listo.csv que contiene los datos con categorías inferidas para productos que tenían valores faltantes, el archivo product_catalog.csv que es una tabla indexada de productos únicos con sus atributos, y ver.ipynb que es un notebook de verificación para validar la integridad de los datos procesados. Finalmente, la carpeta data/final contiene events_final.csv que es el conjunto de datos listo para ser consumido por los modelos y por la API en tiempo de ejecución.
+
+```
+FLUJO DE TRANSFORMACIÓN DE DATOS
+
+data/raw/events.csv
+(Datos originales, tal como fueron recolectados)
+│
+├─ Columnas: event_time, event_type, product_id, category_id,
+│            category_code, brand, price, user_id, user_session
+│
+├─ Problemas:
+│  ├─ Algunos category_code = NULL
+│  ├─ Algunos brand = NULL
+│  ├─ Posibles duplicados
+│  └─ Inconsistencias en formato
+│
+v
+[PIPELINE DE LIMPIEZA Y TRANSFORMACIÓN]
+│
+├─ Step 1: Cargar y validar
+├─ Step 2: Inferir categorías (category_code)
+├─ Step 3: Inferir marcas (brand)
+├─ Step 4: Crear niveles jerárquicos
+├─ Step 5: Feature engineering
+├─ Step 6: Validar integridad
+│
+v
+data/processed/
+│
+├─ inferido_listo.csv
+│  └─ Datos con categorías e inferencias realizadas
+│     Columnas: todas las originales + category_inferred + brand_inferred
+│
+├─ product_catalog.csv
+│  └─ Catálogo único de productos
+│     (deduplicado, información agregada)
+│
+└─ ver.ipynb
+   └─ Notebook de verificación y validación
+│
+v
+[INGENIERÍA DE CARACTERÍSTICAS]
+│
+├─ Crear variaciones de categoría (nivel1, nivel2, nivel3)
+├─ Normalizar precios
+├─ Codificar marcas
+├─ Crear timestamps
+│
+v
+data/final/events_final.csv
+(Datos listos para modelos)
+│
+├─ Columnas enriquecidas
+├─ Sin valores faltantes críticos
+├─ Categorías estandarizadas
+├─ Listo para ALS y K-Means
+│
+v
+[CONSUMIDO POR]
+├─ api/main.py (endpoints de datos)
+├─ Modelo ALS (recomendaciones usuarios conocidos)
+└─ Modelo K-Means (clustering de nuevos usuarios)
+```
+
+## Modelos de Machine Learning
+
+El proyecto utiliza dos algoritmos complementarios de machine learning. El primero es SVD (Descomposición en Valores Singulares), que es una técnica de factorización matricial que descubre patrones latentes en la matriz de interacciones usuario-producto. SVD es especialmente efectivo para usuarios conocidos porque puede identificar relaciones implícitas entre usuarios y productos. Por ejemplo, si el usuario A compró productos similares al usuario B, entonces el modelo puede inferir que el usuario A probablemente también estaría interesado en otros productos que compró el usuario B. Este enfoque se denomina filtrado colaborativo y es el corazón de sistemas de recomendación modernos.
+
+```
+CÓMO FUNCIONA SVD (Descomposición en Valores Singulares)
+
+MATRIZ ORIGINAL (usuario x producto)
+        P1   P2   P3   P4   P5   P6   P7
+U1  [   5    0    3    0    0    0    0  ]
+U2  [   0    4    0    0    0    0    2  ]
+U3  [   2    0    0    5    0    0    0  ]
+U4  [   0    0    1    0    4    5    0  ]
+...
+
+Significado: U1 compró P1 (5 estrellas), P3 (3 estrellas), no vio P2, etc.
+
+    DESCOMPOSICIÓN
+         │
+         v
+┌─────────────────────────────────────┐
+│  U = Matriz de factores usuario     │  cada usuario se representa
+│  Σ = Matriz de valores singulares   │  como un vector de características
+│  V = Matriz de factores producto    │  latentes (gustos implícitos)
+└─────────────────────────────────────┘
+
+    PROCESO
+         │
+         v
+Para recomendar a usuario U1:
+1. Obtener su vector latente (fila en U)
+2. Calcular similitud con todos los vectores de producto (columnas en V)
+3. Ordenar productos por similitud
+4. Retornar top-N productos que el usuario no ha visto
+
+RESULTADO: Recomendaciones personalizadas basadas en gustos implícitos
+```
+
+El segundo algoritmo es **K-Means Clustering** con **k=4 clusters**, que es específicamente utilizado para el onboarding de nuevos usuarios. K-Means agrupa usuarios en cuatro segmentos distintos basados en similitudes en su comportamiento y preferencias. Esta segmentación es particularmente valiosa para nuevos usuarios sin historial previo, ya que permite clasificarlos automáticamente en uno de estos cuatro grupos de usuarios similares y recomendar productos que otros usuarios en ese mismo cluster han encontrado interesantes.
+
+```
+CÓMO FUNCIONA K-MEANS (Clustering para Onboarding)
+
+DATOS DE ENTRENAMIENTO
+Usuarios históricos con sus características:
+- Total de eventos
+- Productos únicos vistos
+- Views, cart adds, purchases
+- Precio promedio
+- Recencia (días)
+- Proporciones por hora del día y día de semana
+- Proporciones por categorías temáticas (tech, fashion_lifestyle, home, welfare)
+... (21 variables normalizadas)
+
+    ALGORITMO K-MEANS (K=4 clusters)
+         │
+    ┌────┴────┐
+    v         v
+1. Inicializar 4 centros    2. Asignar usuarios a centros
+   aleatoriamente              más cercanos (distancia euclidiana)
+         │                      │
+         ├──────┬───────────────┘
+         v      v
+    3. Recalcular centros basado
+       en promedio de usuarios
+       en cada cluster
+         │
+         └─→ ¿Convergió?
+             NO: volver a 2
+             SÍ: terminar
+
+RESULTADO: 4 clusters de usuarios (Cluster 0, 1, 2, 3)
+┌────────────────────────────────────────────────────┐
+│ Cluster 0: Usuarios con perfil 0                   │
+│   - Características comportamentales distintivas    │
+│   - Preferencias y patrones de compra únicos        │
+│   - Afinidad específica por categorías              │
+├────────────────────────────────────────────────────┤
+│ Cluster 1: Usuarios con perfil 1                   │
+│   - Características comportamentales diferentes     │
+│   - Afinidad por otras categorías                   │
+│   - Volumen de actividad distinto                   │
+├────────────────────────────────────────────────────┤
+│ Cluster 2: Usuarios con perfil 2                   │
+│   - Patrones únicos de navegación                   │
+│   - Comportamiento diferenciado                     │
+├────────────────────────────────────────────────────┤
+│ Cluster 3: Usuarios con perfil 3                   │
+│   - Comportamiento adicional distinto               │
+│   - Segmento especializado de usuarios              │
+└────────────────────────────────────────────────────┘
+
+PARA NUEVOS USUARIOS EN ONBOARDING:
+Usuario nuevo → Presenta 4 productos (uno por cluster) → Usuario selecciona preferencia
+→ Sistema asigna al cluster elegido → Retorna recomendaciones del cluster
+```
+
+Adicionalmente, el proyecto incluye un **Gaussian Mixture Model (GMM)** como modelo de clustering alternativo para análisis comparativo y exploración de patrones. Mientras que K-Means es el modelo que impacta directamente la experiencia del usuario en Streamlit durante el onboarding, GMM permite investigar segmentaciones probabilísticas con mayor flexibilidad. GMM utiliza k=2 componentes gaussianos para identificar dos perfiles principales de usuarios: aquellos con bajo engagement (28.5% de usuarios) y aquellos con alto engagement (71.5% de usuarios). Este modelo alternativo enriquece el análisis de datos del proyecto sin interferir con el flujo principal de recomendaciones.
+
+
+## Análisis Jerárquico de Categorías
+
+Después de los procesos de limpieza e inferencia, se realizó un análisis profundo de la estructura de las categorías para entender cómo estaban organizadas jerárquicamente. Las categorías seguían un formato delimitado por puntos donde cada nivel representaba un mayor grado de especificidad, por ejemplo electronics.telephone.accessory o computers.components.cooler.
+
+```
+ESTRUCTURA JERÁRQUICA DE CATEGORÍAS
+
+electronics.telephone.accessory
+|           |         |
+|           |         +-- Nivel 3 (accessory)
+|           +---------- Nivel 2 (telephone)
++---------------------- Nivel 1 (electronics)
+
+Profundidad = 3 niveles
+Delimitador = punto (.)
+```
+
+El análisis identificó que la mayoría de categorías se distribuía en tres niveles de profundidad. El nivel 1 contenía categorías muy generales como electronics o computers. El nivel 2, como telephone o components, proporcionaba especificidad media. El nivel 3, como accessory o cooler, era extremadamente específico. La distribución de datos mostró concentración en el nivel 2 con más de 634 mil registros, mientras que el nivel 3 tenía apenas 415 registros. Esta disparidad fue crítica para tomar decisiones de modelado.
+
+```
+DISTRIBUCIÓN DE REGISTROS POR NIVEL JERÁRQUICO
+
+Nivel 1 (1 punto):        250,245 registros (19%)
+Nivel 2 (2 puntos):       634,304 registros (76%)
+Nivel 3 (3 puntos):       415 registros    (0.03%)
+Nivel 0 (sin puntos):     0 registros      (0%)
+
+RECOMENDACIÓN: Usar Nivel 2 como principal para modelado
+```
+
+## Decisión de Transformación Categórica
+
+Con base en este análisis jerárquico, se definió una estrategia clara de transformación. El sistema dividió cada category_code en múltiples columnas representando cada nivel: nivel1, nivel2 y nivel3. La decisión arquitectónica fue priorizar el nivel 2 para el modelado principal porque ofrecía el equilibrio óptimo entre granularidad y representatividad. Usar el nivel 3 habría causado problemas de dispersión (sparsity) dado que muchas categorías específicas tienen muy pocas instancias, lo que dificulta que el modelo aprenda patrones significativos. Por el contrario, el nivel 1 habría sido demasiado general, perdiendo capacidad descriptiva.
+
+Esta transformación permitió que el sistema de recomendación operara con características categóricas bien distribuidas, mejorando significativamente la calidad de los clusters y las predicciones de similitud entre productos. Los niveles más profundos se mantuvieron como información complementaria para análisis posterior, garantizando que ninguna información valiosa se perdía en el proceso de estandarización.
+
+### DIAGRAMA DE DIAGNÓSTICO Y SOLUCIÓN
+
+```
+ERROR: ConnectionError (Streamlit no puede conectar a API)
+│
+├─→ Causa 1: API no está corriendo
+│   Síntoma: Puerto 8000 no responde
+│   Solución: 
+│   Terminal 1 $ uvicorn api.main:app --reload --port 8000
+│
+├─→ Causa 2: IP o puerto incorrecto
+│   Síntoma: URL http://localhost:8000 no es accesible
+│   Solución:
+│   - Verificar que API = "http://localhost:8000" en app.py
+│   - Probar en navegador: http://localhost:8000/docs
+│
+└─→ Causa 3: Firewall bloqueando puerto
+    Solución:
+    - Permitir puerto 8000 en firewall de Windows
+    - O cambiar a --port 9000 y actualizar en Streamlit
+
+─────────────────────────────────────────
+
+ERROR: FileNotFoundError (events_final.csv no encontrado)
+│
+├─→ Causa: Pipeline no ejecutado
+│   Síntoma: Carpeta data/final está vacía
+│   Solución:
+│   Terminal $ python run_pipeline.py
+│   (esperar 5-15 minutos)
+│
+└─→ Verificación:
+    - Comprobar: data/final/events_final.csv existe
+    - Si existe, reiniciar API y Streamlit
+
+─────────────────────────────────────────
+
+ERROR: Port 8000 already in use
+│
+├─→ Opción 1: Encontrar y matar proceso
+│   Windows: taskkill /PID <PID> /F
+│   PowerShell: Get-Process -Id <PID> | Stop-Process -Force
+│
+├─→ Opción 2: Usar puerto diferente
+│   Comando: uvicorn api.main:app --port 8001
+│   Actualizar en app.py: API = "http://localhost:8001"
+│
+└─→ Opción 3: Reiniciar PC (nuclear option)
+
+─────────────────────────────────────────
+
+ERROR: ModuleNotFoundError
+│
+├─→ Causa: Dependencia no instalada
+│   Síntoma: "No module named 'fastapi'" u otra librería
+│
+├─→ Solución 1: Reinstalar todo
+│   $ pip install -r requirements.txt
+│
+├─→ Solución 2: Instalar específica
+│   $ pip install fastapi uvicorn streamlit scikit-learn pandas
+│
+└─→ Solución 3: Verificar ambiente
+    $ python -m pip list
+    (asegurar que estén todas las librerías)
+```
 
 ## Descripción General
 
@@ -1931,7 +2156,6 @@ Se utiliza el **Population Stability Index (PSI)** para medir el nivel de desví
 2. **Tipo de interacción** — Distribución de `event_type` (view / cart / purchase)
 3. **Tabla de alertas** — PSI por categoría con colorización: verde / amarillo / rojo según umbral
 
-
 ### Reentrenamiento
 
 Cuando el PSI supera 0.25 en categorías relevantes, se debe ejecutar el pipeline de reentrenamiento:
@@ -1951,3 +2175,292 @@ streamlit run frontend_streamlit/app.py
 
 - Aplicación disponible en: `http://localhost:8501`
 - Navegación entre páginas desde el sidebar izquierdo
+
+## Conclusión streamlit
+
+Click & Tech representa una aplicación completa de machine learning aplicado, combinando ciencia de datos, ingeniería backend y desarrollo frontend en una plataforma cohesiva. El sistema demuestra cómo organizar un proyecto de machine learning siguiendo principios profesionales de arquitectura de software, manteniendo claridad en la separación de responsabilidades entre componentes. Tanto la API como Streamlit están diseñados para ser fáciles de mantener, escalar y extender con nuevas funcionalidades, permitiendo que el sistema crezca junto con las necesidades del negocio.
+
+---
+# 13. 📌 Resultados y Hallazgos
+
+El proyecto permitió construir un sistema híbrido de recomendación capaz de abordar problemas típicos de e-commerce como:
+
+- baja personalización,
+- sparse data,
+- y cold start de usuarios.
+
+A través de técnicas de clustering, collaborative filtering y re-ranking semántico, se logró mejorar la relevancia de las recomendaciones y comprender mejor el comportamiento de los usuarios.
+
+### 1. Hallazgos del Negocio (EDA)
+
+El principal problema no está en finalizar la compra, sino en lograr que el usuario encuentre productos suficientemente relevantes para agregarlos al carrito.
+
+Esto justifica directamente la necesidad de un sistema de recomendación más preciso.
+
+### 2. Problema Crítico: Cold Start
+
+Métrica	Resultado
+Usuarios con ≤ 5 eventos	94%
+Mediana de eventos por usuario	1
+
+Esto indica que la mayoría de usuarios tienen muy poca interacción histórica, generando un escenario extremo de cold start y alta dispersión en la matriz usuario-producto.
+
+### 3. Resultados del Pipeline de Datos
+
+El pipeline permitió:
+
+reducir valores nulos,
+recuperar categorías faltantes mediante inferencia,
+mejorar consistencia semántica,
+y estructurar las categorías jerárquicas para el modelado.
+
+Además, se identificó que el:
+
+nivel 2
+
+representaba el mejor equilibrio entre granularidad y estabilidad para el sistema de recomendación
+
+### 4. Resultados del Clustering
+
+Los modelos K-Means y GMM identificaron consistentemente:
+
+k=2
+
+segmentos principales de usuarios.
+
+***Cluster 1:***
+- Usuarios Tecnológicos / Alto Valor
+- mayor interacción,
+- mayor actividad de compra,
+- afinidad hacia tecnología,
+- comportamiento más recurrente.
+
+***Cluster 0:***
+- Usuarios Generales / Bajo Valor
+- menor engagement,
+- navegación más superficial,
+- menor frecuencia de compra.
+- Hallazgo principal
+
+Los usuarios con afinidad tecnológica mostraron mayor valor comercial y mayor profundidad dentro del funnel.
+
+### 5. Resultados del Sistema de Recomendación
+
+ALS fue seleccionado como modelo principal tras superar a SVD en desempeño y estabilidad sobre datos implícitos.
+
+Sin embargo, el hallazgo más importante fue que:
+
+la incorporación de información semántica mejoró el rendimiento del recomendador.
+
+### 6. Éxito del Re-ranking Semántico
+
+El sistema híbrido ALS + taxonomía logró mejorar simultáneamente:
+
+**Precision@K** y **Recall@K**
+
+Esto demuestra que la clasificación jerárquica de productos aporta señal útil complementaria al collaborative filtering.
+
+### 7. Hallazgo Más Importante
+
+El Grid Search mostró que el mejor balance fue:
+
+| Componente | Peso |
+|---|---|
+| ALS | 0.4 |
+| Taxonomía | 0.6 |
+
+Esto indica que la estructura semántica del catálogo aporta una señal extremadamente fuerte para la recomendación.
+
+### La API REST permitió desacoplar el sistema de recomendación
+
+La implementación de FastAPI permitió transformar el modelo en un servicio consumible y escalable.
+
+- El sistema quedó preparado para integrarse con aplicaciones externas.
+- La arquitectura desacoplada facilita mantenimiento y escalabilidad.
+- Los endpoints permiten consultar recomendaciones en tiempo real.
+- La serialización estructurada facilita interoperabilidad entre backend y frontend
+
+### El Frontend Streamlit permitió visualizar el sistema como producto real
+
+La construcción de la tienda interactiva permitió simular una experiencia cercana a un entorno real de e-commerce.
+
+- Se logró visualizar recomendaciones dinámicas por usuario.
+- El monitor de salud permitió supervisar:
+* estado del sistema,
+* carga de modelos,
+* disponibilidad de endpoints,
+* y funcionamiento general del recomendador.
+La interfaz facilita validación funcional y demostración del proyecto.
+
+### 8. Conclusión General
+
+El proyecto demuestra que combinar:
+
+- ALS,
+- clustering,
+- feedback implícito,
+- y semantic re-ranking
+- API y Streamlit
+
+permite construir un sistema de recomendación más robusto, interpretable, escalable y adaptable a escenarios reales de e-commerce con sparse data y cold start.
+
+---
+# 12. 📌Limitaciones del Proyecto
+
+el proyecto presenta varias limitaciones técnicas y analíticas propias de los sistemas de recomendación basados en datos implícitos y escenarios reales de e-commerce.
+
+### 1. Sparse Data Extrema
+
+La principal limitación del proyecto es la alta dispersión de la matriz usuario-producto.
+
+La mayoría de usuarios presentan muy pocas interacciones:
+
+94% ≤ 5 interacciones
+
+Esto limita significativamente la capacidad de los modelos colaborativos para aprender patrones robustos y generalizables.
+
+### 2. Dataset Limitado Temporalmente
+
+El dataset cubre un periodo relativamente corto:
+
+septiembre 2020 → febrero 2021.
+
+Esto limita: el análisis de comportamiento a largo plazo,
+la detección de cambios estacionales más complejos,
+y el modelado de ciclos prolongados de consumo.
+
+### 3. Falta de Variables Contextuales
+
+El sistema no incorpora variables externas como:
+
+- ubicación geográfica,
+- dispositivo,
+- campañas de marketing,
+- clima,
+- promociones,
+- o contexto de navegación.
+
+Por lo tanto, las recomendaciones se basan únicamente en comportamiento histórico e interacción con productos.
+
+---
+# 13. 📌 Futuras Mejoras
+
+Aunque el sistema híbrido desarrollado logró resultados sólidos en escenarios de sparse data y cold start, existen múltiples oportunidades de mejora tanto a nivel técnico como de negocio.
+
+### 1. Incorporación de Modelos Deep Learning
+
+Una posible evolución del sistema consiste en integrar arquitecturas más avanzadas basadas en Deep Learning, como:
+
+- Neural Collaborative Filtering (NCF),
+- Autoencoders,
+- Transformers para recomendación,
+- o modelos secuenciales como LSTM/GRU.
+
+Estos enfoques permitirían capturar patrones de comportamiento más complejos y relaciones no lineales entre usuarios y productos.
+
+### 3. Evaluación Online y A/B Testing
+
+El proyecto fue evaluado únicamente en entorno offline. Una mejora importante sería implementar:
+
+- pruebas A/B,
+- métricas de negocio reales,
+- y monitoreo en producción.
+
+Esto permitiría medir impacto real sobre:
+
+- CTR,
+- conversión,
+- retención,
+- ticket promedio,
+- y satisfacción del usuario.
+
+### 4. Sistema de Recomendación en Tiempo Real
+
+Actualmente el sistema funciona principalmente sobre datos históricos procesados por lotes (batch processing).
+
+Una mejora futura sería incorporar:
+
+- streaming de eventos,
+- actualización online de perfiles,
+- y recomendaciones en tiempo real.
+
+Esto permitiría reaccionar inmediatamente a cambios recientes en el comportamiento del usuario.
+
+### 5. Incorporación de Variables Contextuales
+
+El sistema podría enriquecerse incluyendo información adicional como:
+
+- ubicación geográfica,
+- dispositivo utilizado,
+- temporalidad,
+- promociones activas,
+- campañas de marketing,
+- o contexto de navegación.
+
+Esto permitiría evolucionar hacia sistemas de recomendación context-aware.
+
+### 4. Sistema Híbrido Más Complejo
+
+El sistema actual combina ALS + clustering + semantic re-ranking. Futuramente podrían integrarse nuevas señales como:
+
+- popularidad temporal,
+- tendencias,
+- co-visitas,
+- sesiones de navegación,
+- o grafos usuario-producto.
+
+Esto permitiría construir un recomendador aún más robusto y dinámico.
+
+### 5. Escalabilidad Productiva de la API
+Evolucionar la API hacia un entorno más robusto mediante:
+
+- Docker,
+- balanceo de carga,
+- autenticación,
+- caché,
+- y despliegue cloud.
+
+### 6. Evolución del Frontend
+
+Transformar el prototipo Streamlit en una aplicación más completa con:
+
+- autenticación de usuarios,
+- historial personalizado,
+- dashboards analíticos,
+- y métricas comerciales en tiempo real.
+
+
+---
+# 14. 📌 Conclusiones
+
+El desarrollo de este proyecto permitió construir un sistema híbrido de recomendación orientado a un entorno real de e-commerce, integrando procesos de limpieza de datos, análisis exploratorio, feature engineering, segmentación de usuarios y modelos avanzados de recomendación.
+
+A lo largo del análisis se identificó que la plataforma presenta un escenario extremo de ***sparse data*** y ***cold start***, donde la mayoría de los usuarios tienen muy pocas interacciones históricas. Este hallazgo fue determinante para diseñar una arquitectura híbrida capaz de complementar las limitaciones del collaborative filtering tradicional.
+
+El pipeline de datos permitió mejorar significativamente la calidad y consistencia del dataset mediante procesos de inferencia de categorías, normalización jerárquica y construcción de variables de comportamiento. Estas transformaciones hicieron posible representar de forma más precisa los patrones de navegación y consumo de los usuarios.
+
+La segmentación mediante K-Means y Gaussian Mixture Models demostró que el comportamiento de los clientes no es homogéneo, identificando perfiles claramente diferenciados entre usuarios tecnológicos de alto valor y usuarios de interacción más general o exploratoria. Esto genera oportunidades importantes para estrategias de personalización y marketing segmentado.
+
+En cuanto al sistema de recomendación, ALS mostró un mejor desempeño frente a SVD en escenarios de feedback implícito. Sin embargo, el hallazgo más importante del proyecto fue comprobar experimentalmente que la incorporación de información semántica basada en taxonomía de productos mejora el desempeño del recomendador.
+
+El semantic re-ranking logró aumentar simultáneamente métricas como Precision@10 y Recall@10, especialmente en usuarios con pocas interacciones, validando que la información categórica ayuda a compensar parcialmente las debilidades del collaborative filtering en escenarios sparse.
+
+el proyecto permitió evidenciar que los usuarios mantienen afinidades muy específicas dentro del catálogo, y que las categorías más detalladas aportan una señal semántica altamente relevante para la recomendación.
+
+Adicionalmente, la implementación de una API REST con FastAPI permitió transformar el modelo en un servicio desacoplado, escalable y listo para integraciones futuras, mientras que el frontend desarrollado en Streamlit permitió visualizar el recomendador como una solución funcional e interactiva cercana a un entorno real de negocio
+
+Finalmente, el sistema desarrollado demuestra que combinar:
+
+- Ingenieria de datos
+- Arquitectuta Backend
+- collaborative filtering,
+- clustering,
+- feedback implícito,
+- re-ranking semántico
+- y Visualización interactiva
+
+permite construir soluciones de recomendación más robustas, interpretables, escalables y adaptadas a problemas reales de e-commerce.
+
+El proyecto establece una base sólida para futuras mejoras orientadas a sistemas en tiempo real, modelos basados en Deep Learning y arquitecturas escalables de producción.
+
+---
